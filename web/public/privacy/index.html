@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Privacy Policy — Toast</title>
+    <link rel="icon" href="/favicon.png" type="image/png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta
+      name="description"
+      content="Privacy policy for Toast, a macOS menu bar app for Vercel deployment status."
+    />
+    <style>
+      :root {
+        color-scheme: light dark;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        line-height: 1.6;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: #0a0a0a;
+        color: #fafafa;
+      }
+      main {
+        max-width: 42rem;
+        margin: 0 auto;
+        padding: 2.5rem 1.5rem 3rem;
+      }
+      .back {
+        display: inline-block;
+        margin-bottom: 1.5rem;
+        color: #71717a;
+        text-decoration: none;
+        font-size: 0.875rem;
+      }
+      .back:hover {
+        color: #a1a1aa;
+      }
+      h1 {
+        font-size: 1.75rem;
+        margin: 0 0 0.25rem;
+      }
+      .updated {
+        color: #71717a;
+        font-size: 0.875rem;
+        margin: 0 0 2rem;
+      }
+      h2 {
+        font-size: 1.125rem;
+        margin: 2rem 0 0.75rem;
+      }
+      p,
+      li {
+        color: #a1a1aa;
+        margin: 0.75rem 0;
+      }
+      ul {
+        padding-left: 1.25rem;
+      }
+      a {
+        color: #0070f3;
+      }
+      strong {
+        color: #fafafa;
+      }
+      footer {
+        margin-top: 3rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid #27272a;
+        font-size: 0.875rem;
+      }
+      footer nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+      }
+      footer a {
+        color: #71717a;
+        text-decoration: none;
+      }
+      footer a:hover {
+        color: #a1a1aa;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <a class="back" href="/">← Back to Toast</a>
+      <h1>Privacy Policy</h1>
+      <p class="updated">Last updated: June 28, 2026</p>
+
+      <p>
+        This Privacy Policy describes how <strong>Toast</strong> (the macOS menu bar application
+        available at <a href="https://toast.asit.space/">toast.asit.space</a>) and its website
+        handle information. Toast is developed independently and is not affiliated with Vercel Inc.
+      </p>
+
+      <h2>Summary</h2>
+      <p>
+        Toast is designed to keep your data on your Mac. The app stores your Vercel personal access
+        token and preferences locally. It communicates directly with Vercel’s API to read deployment
+        status. Toast does not operate user accounts, analytics, or advertising on your behalf.
+      </p>
+
+      <h2>Information the app stores locally</h2>
+      <p>On your Mac, Toast may store:</p>
+      <ul>
+        <li>
+          Your <strong>Vercel personal access token</strong>, saved in the macOS Keychain
+        </li>
+        <li>
+          Your selected team, watched projects, and app preferences (for example, polling settings,
+          notification preferences, and background behavior)
+        </li>
+        <li>
+          Cached deployment and project data needed to display status in the menu bar
+        </li>
+      </ul>
+      <p>
+        This information stays on your device unless you remove it by disconnecting the app or
+        uninstalling Toast.
+      </p>
+
+      <h2>Information sent over the network</h2>
+      <p>When you use Toast, the app may contact:</p>
+      <ul>
+        <li>
+          <strong>Vercel</strong> (<a href="https://vercel.com">vercel.com</a>) — to validate your
+          token and fetch teams, projects, and deployment status using read-only API requests
+        </li>
+        <li>
+          <strong>toast.asit.space</strong> — to check for app updates via the Sparkle appcast feed
+        </li>
+      </ul>
+      <p>
+        Toast does not send your Vercel token to any server operated by the Toast developer. API
+        requests go directly from your Mac to Vercel.
+      </p>
+
+      <h2>Website</h2>
+      <p>
+        The Toast website provides a landing page, download redirect, and update feed. Like most
+        websites, hosting infrastructure may log standard request metadata (such as IP address,
+        browser type, and requested URL) for security and operations. The site does not use
+        third-party analytics or advertising trackers.
+      </p>
+
+      <h2>Notifications</h2>
+      <p>
+        If you enable notifications, Toast uses macOS local notifications to alert you when a
+        watched deployment completes. Notification content is generated on your device from
+        deployment data retrieved from Vercel.
+      </p>
+
+      <h2>What we do not collect</h2>
+      <ul>
+        <li>No Toast account or login is required</li>
+        <li>No usage analytics or crash reporting service is built into the app</li>
+        <li>No sale or sharing of personal information for advertising</li>
+      </ul>
+
+      <h2>Third-party services</h2>
+      <p>
+        Your use of Vercel is governed by
+        <a href="https://vercel.com/legal/privacy-policy">Vercel’s privacy policy</a>. Downloads are
+        hosted on GitHub Releases; GitHub’s policies apply to that infrastructure.
+      </p>
+
+      <h2>Your choices</h2>
+      <ul>
+        <li>Disconnect your token at any time in Toast Settings</li>
+        <li>Remove the app and its Keychain entry by uninstalling Toast</li>
+        <li>Use a read-only, team-scoped Vercel token with the minimum access you need</li>
+      </ul>
+
+      <h2>Children</h2>
+      <p>Toast is not directed at children under 13, and we do not knowingly collect their data.</p>
+
+      <h2>Changes</h2>
+      <p>
+        We may update this policy from time to time. The “Last updated” date at the top of this page
+        will reflect the latest revision.
+      </p>
+
+      <h2>Contact</h2>
+      <p>
+        Questions about this policy can be sent via
+        <a href="https://github.com/asitkhanda/toast/issues">GitHub Issues</a> on the Toast
+        repository.
+      </p>
+
+      <footer>
+        <nav>
+          <a href="/">Home</a>
+          <a href="/terms">Terms &amp; Conditions</a>
+          <a href="https://github.com/asitkhanda/toast">GitHub</a>
+        </nav>
+      </footer>
+    </main>
+  </body>
+</html>

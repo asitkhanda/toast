@@ -86,6 +86,16 @@
       }
       footer a {
         color: #71717a;
+        text-decoration: none;
+      }
+      footer a:hover {
+        color: #a1a1aa;
+      }
+      footer nav {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 1rem;
       }
     </style>
   </head>
@@ -110,7 +120,11 @@
         <pre style="margin: 0.75rem 0 0; padding: 0.75rem; overflow-x: auto; background: #18181b; border-radius: 0.375rem; font-size: 0.75rem;">shasum -a 256 ~/Downloads/Toast-*.dmg</pre>
       </div>
       <footer>
-        <a href="https://github.com/asitkhanda/toast">View source on GitHub</a>
+        <nav>
+          <a href="/privacy">Privacy Policy</a>
+          <a href="/terms">Terms &amp; Conditions</a>
+          <a href="https://github.com/asitkhanda/toast">GitHub</a>
+        </nav>
       </footer>
     </main>
   </body>
