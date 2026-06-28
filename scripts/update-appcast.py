@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -26,16 +27,28 @@ def main() -> int:
         type="application/octet-stream"
         sparkle:edSignature="{ed_signature}"/>
     </item>
-  """
+"""
 
     appcast_path = Path("web/public/appcast.xml")
     content = appcast_path.read_text(encoding="utf-8")
-    marker = "  </channel>"
-    if marker not in content:
-        print("Invalid appcast.xml: missing channel close tag", file=sys.stderr)
-        return 1
 
-    appcast_path.write_text(content.replace(marker, item + marker, 1), encoding="utf-8")
+    version_pattern = re.compile(
+        r"    <item>\s*"
+        r"<title>Version [^<]+</title>.*?<sparkle:shortVersionString>"
+        + re.escape(version)
+        + r"</sparkle:shortVersionString>.*?</item>\s*",
+        re.DOTALL,
+    )
+    if version_pattern.search(content):
+        content = version_pattern.sub(item, content, count=1)
+    else:
+        marker = "  </channel>"
+        if marker not in content:
+            print("Invalid appcast.xml: missing channel close tag", file=sys.stderr)
+            return 1
+        content = content.replace(marker, item + marker, 1)
+
+    appcast_path.write_text(content, encoding="utf-8")
     return 0
 
 
