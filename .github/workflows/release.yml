@@ -94,8 +94,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           cp web/public/appcast.xml /tmp/appcast.xml
           git fetch origin main
-          git checkout main
-          git pull --rebase origin main
+          git switch -C main origin/main
           cp /tmp/appcast.xml web/public/appcast.xml
           git add web/public/appcast.xml
           if git diff --staged --quiet; then
