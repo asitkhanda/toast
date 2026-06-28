@@ -27,5 +27,16 @@
         type="application/octet-stream"
         sparkle:edSignature="/m1vNbB2WYEnnWZihBR34GfxYaW+M2GwPmzqRNFMVhoufkucQ3SLupGArSthSBsG46js5w9a2VPVAf8L/Rx6Bg=="/>
     </item>
+    <item>
+      <title>Version 0.1.2</title>
+      <sparkle:version>3</sparkle:version>
+      <sparkle:shortVersionString>0.1.2</sparkle:shortVersionString>
+      <pubDate>Sun, 28 Jun 2026 10:53:06 +0000</pubDate>
+      <enclosure
+        url="https://github.com/asitkhanda/toast/releases/download/v0.1.2/Vercel-Status-0.1.2.zip"
+        length="4473671"
+        type="application/octet-stream"
+        sparkle:edSignature="rM7J0Nnq+Ny2hm6PecNYZ/MBst9Lwy4kiSuhzESrvCdeBQ8SXnY/keb3pUGYaKaIAaTSATU9oo0PQo/vsaxfCQ=="/>
+    </item>
 </channel>
 </rss>
