@@ -1,0 +1,8 @@
+.build/
+dist/
+.swiftpm/
+.DS_Store
+*.xcuserstate
+sparkle-private-key
+public-key
+*.pem

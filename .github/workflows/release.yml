@@ -1,0 +1,135 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  release:
+    runs-on: macos-14
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Read version from Info.plist
+        id: version
+        run: |
+          PLIST="VercelStatus/Resources/Info.plist"
+          VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$PLIST")
+          BUILD=$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$PLIST")
+          TAG="${GITHUB_REF_NAME#v}"
+          if [ "$TAG" != "$VERSION" ]; then
+            echo "Tag v$TAG does not match CFBundleShortVersionString $VERSION in Info.plist"
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "build=$BUILD" >> "$GITHUB_OUTPUT"
+          echo "zip_name=Vercel-Status-${VERSION}.zip" >> "$GITHUB_OUTPUT"
+
+      - name: Build app
+        run: |
+          cd VercelStatus
+          ./build.sh
+
+      - name: Sign update archive
+        id: sign
+        env:
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+        run: |
+          if [ -z "$SPARKLE_PRIVATE_KEY" ]; then
+            echo "SPARKLE_PRIVATE_KEY secret is not configured"
+            exit 1
+          fi
+          ZIP="VercelStatus/dist/${{ steps.version.outputs.zip_name }}"
+          SIGN_UPDATE=$(find VercelStatus/.build/artifacts -path "*/Sparkle/bin/sign_update" | head -1)
+          if [ -z "$SIGN_UPDATE" ]; then
+            echo "sign_update tool not found"
+            exit 1
+          fi
+          KEY_FILE=$(mktemp)
+          printf '%s' "$SPARKLE_PRIVATE_KEY" > "$KEY_FILE"
+          SIGN_OUTPUT=$("$SIGN_UPDATE" -f "$KEY_FILE" "$ZIP")
+          rm -f "$KEY_FILE"
+          echo "$SIGN_OUTPUT"
+          ED_SIGNATURE=$(echo "$SIGN_OUTPUT" | sed -n 's/.*sparkle:edSignature="\([^"]*\)".*/\1/p')
+          LENGTH=$(echo "$SIGN_OUTPUT" | sed -n 's/.*length="\([^"]*\)".*/\1/p')
+          if [ -z "$ED_SIGNATURE" ] || [ -z "$LENGTH" ]; then
+            echo "Failed to parse sign_update output"
+            exit 1
+          fi
+          echo "ed_signature=$ED_SIGNATURE" >> "$GITHUB_OUTPUT"
+          echo "length=$LENGTH" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Vercel Status ${{ steps.version.outputs.version }}
+          generate_release_notes: true
+          files: VercelStatus/dist/${{ steps.version.outputs.zip_name }}
+
+      - name: Update appcast
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          BUILD: ${{ steps.version.outputs.build }}
+          ED_SIGNATURE: ${{ steps.sign.outputs.ed_signature }}
+          LENGTH: ${{ steps.sign.outputs.length }}
+          TAG: ${{ github.ref_name }}
+          REPO: ${{ github.repository }}
+        run: |
+          python3 <<'PY'
+          import os
+          from pathlib import Path
+
+          version = os.environ["VERSION"]
+          build = os.environ["BUILD"]
+          ed_signature = os.environ["ED_SIGNATURE"]
+          length = os.environ["LENGTH"]
+          tag = os.environ["TAG"]
+          repo = os.environ["REPO"]
+          download_url = f"https://github.com/{repo}/releases/download/{tag}/Vercel-Status-{version}.zip"
+          pub_date = os.popen('LC_ALL=C date -u "+%a, %d %b %Y %H:%M:%S +0000"').read().strip()
+
+          item = f"""    <item>
+      <title>Version {version}</title>
+      <sparkle:version>{build}</sparkle:version>
+      <sparkle:shortVersionString>{version}</sparkle:shortVersionString>
+      <pubDate>{pub_date}</pubDate>
+      <enclosure
+        url="{download_url}"
+        length="{length}"
+        type="application/octet-stream"
+        sparkle:edSignature="{ed_signature}"/>
+    </item>
+  """
+
+          appcast_path = Path("web/public/appcast.xml")
+          content = appcast_path.read_text()
+          marker = "  </channel>"
+          if marker not in content:
+              raise SystemExit("Invalid appcast.xml: missing channel close tag")
+          updated = content.replace(marker, item + marker, 1)
+          appcast_path.write_text(updated)
+          PY
+
+      - name: Commit appcast
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add web/public/appcast.xml
+          if git diff --staged --quiet; then
+            echo "No appcast changes to commit"
+            exit 0
+          fi
+          git commit -m "Update appcast for ${{ steps.version.outputs.version }} [skip ci]"
+          git push origin HEAD:main
