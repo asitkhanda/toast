@@ -38,5 +38,16 @@
         type="application/octet-stream"
         sparkle:edSignature="rM7J0Nnq+Ny2hm6PecNYZ/MBst9Lwy4kiSuhzESrvCdeBQ8SXnY/keb3pUGYaKaIAaTSATU9oo0PQo/vsaxfCQ=="/>
     </item>
+    <item>
+      <title>Version 0.2.0</title>
+      <sparkle:version>5</sparkle:version>
+      <sparkle:shortVersionString>0.2.0</sparkle:shortVersionString>
+      <pubDate>Sun, 28 Jun 2026 11:55:47 +0000</pubDate>
+      <enclosure
+        url="https://github.com/asitkhanda/toast/releases/download/v0.2.0/Toast-0.2.0.zip"
+        length="4472274"
+        type="application/octet-stream"
+        sparkle:edSignature="XQvtq69UXR/nyRO0X8nOw3q6rSiz7DSDB6DwBMmvpyXtxh1/g762AQSDT/HVpbRbBbdnyz0qknhnUU3FyTuKBg=="/>
+    </item>
 </channel>
 </rss>
