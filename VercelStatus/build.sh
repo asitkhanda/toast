@@ -9,6 +9,8 @@ BUILD_DIR="$ROOT/.build/release"
 APP_DIR="$ROOT/dist/$APP_NAME.app"
 ENTITLEMENTS="$ROOT/Resources/VercelStatus.entitlements"
 INFO_PLIST="$ROOT/Resources/Info.plist"
+ICON_SOURCE="$ROOT/Resources/toast.icon"
+ICON_NAME="toast"
 
 read_plist_value() {
     /usr/libexec/PlistBuddy -c "Print :$1" "$INFO_PLIST"
@@ -39,6 +41,23 @@ chmod +x "$APP_DIR/Contents/MacOS/$EXECUTABLE_NAME"
 
 /usr/libexec/PlistBuddy -c "Add :CFBundleIdentifier string $BUNDLE_ID" "$APP_DIR/Contents/Info.plist" 2>/dev/null || \
   /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier $BUNDLE_ID" "$APP_DIR/Contents/Info.plist"
+
+echo "Compiling app icon..."
+ICON_BUILD_DIR="$ROOT/dist/icon-build"
+ICON_INFO_PLIST="$ROOT/dist/icon-info.plist"
+rm -rf "$ICON_BUILD_DIR"
+mkdir -p "$ICON_BUILD_DIR"
+xcrun actool "$ICON_SOURCE" \
+    --compile "$ICON_BUILD_DIR" \
+    --app-icon "$ICON_NAME" \
+    --output-partial-info-plist "$ICON_INFO_PLIST" \
+    --include-all-app-icons \
+    --target-device mac \
+    --minimum-deployment-target 14.0 \
+    --platform macosx
+cp "$ICON_BUILD_DIR/Assets.car" "$APP_DIR/Contents/Resources/Assets.car"
+cp "$ICON_BUILD_DIR/${ICON_NAME}.icns" "$APP_DIR/Contents/Resources/${ICON_NAME}.icns"
+rm -rf "$ICON_BUILD_DIR" "$ICON_INFO_PLIST"
 
 echo "Embedding Sparkle.framework..."
 SPARKLE_FW="$(find "$ROOT/.build/artifacts" -name "Sparkle.framework" -maxdepth 6 | head -1)"

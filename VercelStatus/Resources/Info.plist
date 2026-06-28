@@ -6,6 +6,10 @@
 	<string>en</string>
 	<key>CFBundleExecutable</key>
 	<string>VercelStatus</string>
+	<key>CFBundleIconFile</key>
+	<string>toast</string>
+	<key>CFBundleIconName</key>
+	<string>toast</string>
 	<key>CFBundleIdentifier</key>
 	<string>com.vercelstatus.app</string>
 	<key>CFBundleInfoDictionaryVersion</key>
@@ -15,9 +19,9 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.1.1</string>
+	<string>0.1.2</string>
 	<key>CFBundleVersion</key>
-	<string>2</string>
+	<string>3</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>14.0</string>
 	<key>LSUIElement</key>
