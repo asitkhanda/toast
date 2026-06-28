@@ -1,7 +1,7 @@
 import SwiftUI
 
 @main
-struct VercelStatusApp: App {
+struct ToastApp: App {
     @State private var store = DeploymentStore()
     @State private var updater = SparkleUpdater()
 

@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
   <channel>
-    <title>Vercel Status Updates</title>
+    <title>Toast Updates</title>
     <link>https://toast.asit.space</link>
-    <description>Updates for Vercel Status</description>
+    <description>Updates for Toast</description>
     <language>en</language>
     <item>
       <title>Version 0.1.0</title>

@@ -7,10 +7,10 @@ cd "$ROOT"
 REPO="${GITHUB_REPOSITORY:-asitkhanda/toast}"
 OWNER="${REPO%%/*}"
 NAME="${REPO##*/}"
-PRIVATE_KEY_FILE="$ROOT/VercelStatus/sparkle-private-key"
+PRIVATE_KEY_FILE="$ROOT/Toast/sparkle-private-key"
 
 if [ ! -f "$PRIVATE_KEY_FILE" ]; then
-  echo "Missing $PRIVATE_KEY_FILE — run VercelStatus/scripts/setup-sparkle-keys.sh first."
+  echo "Missing $PRIVATE_KEY_FILE — run Toast/scripts/setup-sparkle-keys.sh first."
   exit 1
 fi
 
@@ -33,7 +33,7 @@ if [ "$status" = "404" ]; then
     -H "$auth_header" \
     -H "$accept_header" \
     "https://api.github.com/user/repos" \
-    -d "{\"name\":\"$NAME\",\"description\":\"macOS menu bar app for Vercel deployment status\",\"private\":false}" \
+    -d "{\"name\":\"$NAME\",\"description\":\"Toast — macOS menu bar app for Vercel deployment status\",\"private\":false}" \
     >/dev/null
   echo "Created https://github.com/$REPO"
 elif [ "$status" = "200" ]; then

@@ -2,21 +2,21 @@
 import PackageDescription
 
 let package = Package(
-    name: "VercelStatus",
+    name: "Toast",
     platforms: [
         .macOS(.v14),
     ],
     products: [
-        .executable(name: "VercelStatus", targets: ["VercelStatus"]),
+        .executable(name: "Toast", targets: ["Toast"]),
     ],
     dependencies: [
         .package(url: "https://github.com/sparkle-project/Sparkle", from: "2.6.0"),
     ],
     targets: [
         .executableTarget(
-            name: "VercelStatus",
+            name: "Toast",
             dependencies: ["Sparkle"],
-            path: "Sources/VercelStatus"
+            path: "Sources/Toast"
         ),
     ]
 )

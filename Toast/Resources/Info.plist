@@ -5,23 +5,23 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleExecutable</key>
-	<string>VercelStatus</string>
+	<string>Toast</string>
 	<key>CFBundleIconFile</key>
 	<string>toast</string>
 	<key>CFBundleIconName</key>
 	<string>toast</string>
 	<key>CFBundleIdentifier</key>
-	<string>com.vercelstatus.app</string>
+	<string>com.toast.app</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>Vercel Status</string>
+	<string>Toast</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.1.3</string>
+	<string>0.2.0</string>
 	<key>CFBundleVersion</key>
-	<string>4</string>
+	<string>5</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>14.0</string>
 	<key>LSUIElement</key>

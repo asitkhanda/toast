@@ -13,7 +13,7 @@ def main() -> int:
     tag = os.environ["TAG"]
     repo = os.environ["REPO"]
 
-    download_url = f"https://github.com/{repo}/releases/download/{tag}/Vercel-Status-{version}.zip"
+    download_url = f"https://github.com/{repo}/releases/download/{tag}/Toast-{version}.zip"
     pub_date = os.popen('LC_ALL=C date -u "+%a, %d %b %Y %H:%M:%S +0000"').read().strip()
 
     item = f"""    <item>

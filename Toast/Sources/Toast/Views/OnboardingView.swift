@@ -54,7 +54,7 @@ struct OnboardingView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Set up Vercel Status")
+            Text("Set up Toast")
                 .font(.title3.weight(.semibold))
 
             HStack(spacing: 8) {

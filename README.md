@@ -1,4 +1,4 @@
-# Vercel Status
+# Toast
 
 A macOS menu bar app that shows live Vercel deployment status for your watched projects.
 
@@ -9,7 +9,7 @@ A macOS menu bar app that shows live Vercel deployment status for your watched p
 ## Install
 
 1. Download from [toast.asit.space/download](https://toast.asit.space/download) (redirects to the latest `.dmg`).
-2. Open the DMG and drag **Vercel Status** into **Applications**.
+2. Open the DMG and drag **Toast** into **Applications**.
 3. **First launch:** right-click the app and choose **Open** (required because the app is not notarized).
 4. Complete onboarding with your [Vercel personal access token](https://vercel.com/account/tokens).
 
@@ -18,9 +18,9 @@ Automatic updates are delivered via [Sparkle](https://sparkle-project.org/) afte
 ## Build locally
 
 ```bash
-cd VercelStatus
+cd Toast
 ./build.sh
-open "dist/Vercel Status.app"
+open "dist/Toast.app"
 ```
 
 Requires macOS 14+ and Xcode command-line tools.
@@ -28,7 +28,7 @@ Requires macOS 14+ and Xcode command-line tools.
 ## Repository layout
 
 ```
-├── VercelStatus/          # macOS app (Swift + Sparkle)
+├── Toast/                 # macOS app (Swift + Sparkle)
 ├── web/                   # Static site + /download redirect (Vercel)
 │   ├── api/download.ts    # Edge function → latest .dmg on GitHub Releases
 │   └── public/            # Landing page + appcast feed
@@ -40,7 +40,7 @@ Requires macOS 14+ and Xcode command-line tools.
 Before your first release, generate EdDSA keys on your Mac:
 
 ```bash
-cd VercelStatus
+cd Toast
 chmod +x scripts/setup-sparkle-keys.sh
 ./scripts/setup-sparkle-keys.sh
 ```
@@ -48,7 +48,7 @@ chmod +x scripts/setup-sparkle-keys.sh
 Then:
 
 1. The script updates `SUPublicEDKey` in `Resources/Info.plist` automatically.
-2. Add the **private key** to GitHub → **Settings → Secrets and variables → Actions** as `SPARKLE_PRIVATE_KEY` (paste contents of `VercelStatus/sparkle-private-key`).
+2. Add the **private key** to GitHub → **Settings → Secrets and variables → Actions** as `SPARKLE_PRIVATE_KEY` (paste contents of `Toast/sparkle-private-key`).
 
 Never commit the private key. The file is listed in `.gitignore`.
 
@@ -81,7 +81,7 @@ Optional: set **`GITHUB_REPO`** (e.g. `owner/repo`) if the repo slug differs fro
 
 ## Releasing a new version
 
-1. Bump version in `VercelStatus/Resources/Info.plist`:
+1. Bump version in `Toast/Resources/Info.plist`:
    - `CFBundleShortVersionString` — semver (e.g. `0.2.0`)
    - `CFBundleVersion` — increment build number (e.g. `2`)
 2. Commit and push to `main`.
@@ -114,12 +114,12 @@ CI builds are **arm64** (Apple Silicon). macOS 14+ is required.
 Open in Xcode:
 
 ```bash
-open VercelStatus/Package.swift
+open Toast/Package.swift
 ```
 
 Or run a debug build:
 
 ```bash
-cd VercelStatus
+cd Toast
 swift run
 ```

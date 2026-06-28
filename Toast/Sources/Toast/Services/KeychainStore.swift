@@ -2,7 +2,7 @@ import Foundation
 import Security
 
 enum KeychainStore {
-    private static let service = "com.vercelstatus.app"
+    private static let service = "com.toast.app"
     private static let account = "vercel-pat"
 
     static func saveToken(_ token: String) throws {

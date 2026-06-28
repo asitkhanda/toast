@@ -19,7 +19,7 @@ export default async function handler(): Promise<Response> {
     {
       headers: {
         Accept: "application/vnd.github+json",
-        "User-Agent": "Vercel-Status-Download",
+        "User-Agent": "Toast-Download",
         "X-GitHub-Api-Version": "2022-11-28",
       },
     },

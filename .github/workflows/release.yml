@@ -28,7 +28,7 @@ jobs:
       - name: Read version from Info.plist
         id: version
         run: |
-          PLIST="VercelStatus/Resources/Info.plist"
+          PLIST="Toast/Resources/Info.plist"
           VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$PLIST")
           BUILD=$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$PLIST")
           if [ "${{ github.event_name }}" = "push" ]; then
@@ -40,12 +40,12 @@ jobs:
           fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "build=$BUILD" >> "$GITHUB_OUTPUT"
-          echo "zip_name=Vercel-Status-${VERSION}.zip" >> "$GITHUB_OUTPUT"
-          echo "dmg_name=Vercel-Status-${VERSION}.dmg" >> "$GITHUB_OUTPUT"
+          echo "zip_name=Toast-${VERSION}.zip" >> "$GITHUB_OUTPUT"
+          echo "dmg_name=Toast-${VERSION}.dmg" >> "$GITHUB_OUTPUT"
 
       - name: Build app
         run: |
-          cd VercelStatus
+          cd Toast
           ./build.sh
 
       - name: Sign update archive
@@ -57,8 +57,8 @@ jobs:
             echo "SPARKLE_PRIVATE_KEY secret is not configured"
             exit 1
           fi
-          ZIP="VercelStatus/dist/${{ steps.version.outputs.zip_name }}"
-          SIGN_UPDATE=$(find VercelStatus/.build/artifacts -path "*/Sparkle/bin/sign_update" | head -1)
+          ZIP="Toast/dist/${{ steps.version.outputs.zip_name }}"
+          SIGN_UPDATE=$(find Toast/.build/artifacts -path "*/Sparkle/bin/sign_update" | head -1)
           if [ -z "$SIGN_UPDATE" ]; then
             echo "sign_update tool not found"
             exit 1
@@ -78,11 +78,11 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || format('v{0}', steps.version.outputs.version) }}
-          name: Vercel Status ${{ steps.version.outputs.version }}
+          name: Toast ${{ steps.version.outputs.version }}
           generate_release_notes: true
           files: |
-            VercelStatus/dist/${{ steps.version.outputs.dmg_name }}
-            VercelStatus/dist/${{ steps.version.outputs.zip_name }}
+            Toast/dist/${{ steps.version.outputs.dmg_name }}
+            Toast/dist/${{ steps.version.outputs.zip_name }}
 
       - name: Update appcast
         env:

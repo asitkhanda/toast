@@ -5,7 +5,7 @@ enum MenuBarIcon {
     static func image(for status: AggregateStatus) -> NSImage {
         let symbolName = status.menuBarSymbol
         let config = NSImage.SymbolConfiguration(pointSize: 13, weight: .semibold)
-        let base = NSImage(systemSymbolName: symbolName, accessibilityDescription: "Vercel Status")
+        let base = NSImage(systemSymbolName: symbolName, accessibilityDescription: "Toast")
         let image = base?.withSymbolConfiguration(config) ?? NSImage(size: NSSize(width: 18, height: 18))
         image.isTemplate = true
         return image
