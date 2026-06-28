@@ -15,12 +15,15 @@ concurrency:
 
 jobs:
   release:
-    runs-on: macos-latest
+    runs-on: macos-26
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Prepare Xcode
+        run: sudo xcodebuild -runFirstLaunch
 
       - name: Read version from Info.plist
         id: version

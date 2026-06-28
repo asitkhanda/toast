@@ -47,14 +47,21 @@ ICON_BUILD_DIR="$ROOT/dist/icon-build"
 ICON_INFO_PLIST="$ROOT/dist/icon-info.plist"
 rm -rf "$ICON_BUILD_DIR"
 mkdir -p "$ICON_BUILD_DIR"
-xcrun actool "$ICON_SOURCE" \
+if ! xcrun actool "$ICON_SOURCE" \
     --compile "$ICON_BUILD_DIR" \
     --app-icon "$ICON_NAME" \
     --output-partial-info-plist "$ICON_INFO_PLIST" \
     --include-all-app-icons \
     --target-device mac \
     --minimum-deployment-target 14.0 \
-    --platform macosx
+    --platform macosx; then
+    echo "Error: actool failed to compile $ICON_SOURCE"
+    exit 1
+fi
+if [ ! -f "$ICON_BUILD_DIR/Assets.car" ] || [ ! -f "$ICON_BUILD_DIR/${ICON_NAME}.icns" ]; then
+    echo "Error: actool did not produce Assets.car and ${ICON_NAME}.icns"
+    exit 1
+fi
 cp "$ICON_BUILD_DIR/Assets.car" "$APP_DIR/Contents/Resources/Assets.car"
 cp "$ICON_BUILD_DIR/${ICON_NAME}.icns" "$APP_DIR/Contents/Resources/${ICON_NAME}.icns"
 rm -rf "$ICON_BUILD_DIR" "$ICON_INFO_PLIST"
