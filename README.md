@@ -69,10 +69,11 @@ Never commit the private key. The file is listed in `.gitignore`.
 
 1. Import the GitHub repo in [Vercel](https://vercel.com).
 2. Set **Root Directory** to `web`.
-3. Deploy (static site — no build command required).
-4. Add custom domain **`toast.asit.space`** in Vercel → Domains.
-5. In your DNS provider for `asit.space`, add the CNAME record Vercel shows (typically `toast` → `cname.vercel-dns.com`).
-6. Verify [https://toast.asit.space/appcast.xml](https://toast.asit.space/appcast.xml) returns XML over HTTPS.
+3. Set **Output Directory** to `public` (Build Command can stay empty).
+4. Deploy (static site — no build command required).
+5. Add custom domain **`toast.asit.space`** in Vercel → Domains.
+6. In your DNS provider for `asit.space`, add the CNAME record Vercel shows (typically `toast` → `cname.vercel-dns.com`).
+7. Verify [https://toast.asit.space/](https://toast.asit.space/) shows the landing page and [https://toast.asit.space/appcast.xml](https://toast.asit.space/appcast.xml) returns XML over HTTPS.
 
 ## Releasing a new version
 
