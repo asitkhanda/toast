@@ -4,17 +4,18 @@ on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
 
 permissions:
   contents: write
 
 concurrency:
-  group: release-${{ github.ref }}
+  group: release-${{ github.ref_name }}
   cancel-in-progress: true
 
 jobs:
   release:
-    runs-on: macos-14
+    runs-on: macos-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -27,10 +28,12 @@ jobs:
           PLIST="VercelStatus/Resources/Info.plist"
           VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$PLIST")
           BUILD=$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$PLIST")
-          TAG="${GITHUB_REF_NAME#v}"
-          if [ "$TAG" != "$VERSION" ]; then
-            echo "Tag v$TAG does not match CFBundleShortVersionString $VERSION in Info.plist"
-            exit 1
+          if [ "${{ github.event_name }}" = "push" ]; then
+            TAG="${GITHUB_REF_NAME#v}"
+            if [ "$TAG" != "$VERSION" ]; then
+              echo "Tag v$TAG does not match CFBundleShortVersionString $VERSION in Info.plist"
+              exit 1
+            fi
           fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "build=$BUILD" >> "$GITHUB_OUTPUT"
@@ -56,10 +59,7 @@ jobs:
             echo "sign_update tool not found"
             exit 1
           fi
-          KEY_FILE=$(mktemp)
-          printf '%s' "$SPARKLE_PRIVATE_KEY" > "$KEY_FILE"
-          SIGN_OUTPUT=$("$SIGN_UPDATE" -f "$KEY_FILE" "$ZIP")
-          rm -f "$KEY_FILE"
+          SIGN_OUTPUT=$(echo "$SPARKLE_PRIVATE_KEY" | "$SIGN_UPDATE" --ed-key-file - "$ZIP")
           echo "$SIGN_OUTPUT"
           ED_SIGNATURE=$(echo "$SIGN_OUTPUT" | sed -n 's/.*sparkle:edSignature="\([^"]*\)".*/\1/p')
           LENGTH=$(echo "$SIGN_OUTPUT" | sed -n 's/.*length="\([^"]*\)".*/\1/p')
@@ -126,10 +126,13 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main
+          git checkout main
+          git pull --rebase origin main
           git add web/public/appcast.xml
           if git diff --staged --quiet; then
             echo "No appcast changes to commit"
             exit 0
           fi
           git commit -m "Update appcast for ${{ steps.version.outputs.version }} [skip ci]"
-          git push origin HEAD:main
+          git push origin main
