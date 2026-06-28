@@ -7,10 +7,11 @@ enum VercelTokenHelp {
 struct TokenHelpLink: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
-            Link("How to get your token", destination: VercelTokenHelp.tokensURL)
+            Link("How to get your token?", destination: VercelTokenHelp.tokensURL)
+                .font(.caption)
             Text("Create a token with read access to your teams and projects.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
         }
-        .font(.caption)
-        .foregroundStyle(.secondary)
     }
 }

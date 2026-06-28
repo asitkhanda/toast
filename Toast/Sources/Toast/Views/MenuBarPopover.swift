@@ -184,6 +184,7 @@ struct MenuBarPopover: View {
             }
             Spacer()
             Button("Quit") {
+                BackgroundBehavior.markUserQuit()
                 NSApplication.shared.terminate(nil)
             }
         }

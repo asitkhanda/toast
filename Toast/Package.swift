@@ -13,10 +13,19 @@ let package = Package(
         .package(url: "https://github.com/sparkle-project/Sparkle", from: "2.6.0"),
     ],
     targets: [
+        .target(
+            name: "Shared",
+            path: "Sources/Shared"
+        ),
         .executableTarget(
             name: "Toast",
-            dependencies: ["Sparkle"],
+            dependencies: ["Sparkle", "Shared"],
             path: "Sources/Toast"
+        ),
+        .executableTarget(
+            name: "ToastLauncher",
+            dependencies: ["Shared"],
+            path: "Sources/ToastLauncher"
         ),
     ]
 )

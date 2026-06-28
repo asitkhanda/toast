@@ -2,6 +2,18 @@ import Foundation
 import Observation
 import UserNotifications
 
+struct BackgroundPreferences: Sendable {
+    var launchAtLogin: Bool
+    var runInBackground: Bool
+    var relaunchOnCrash: Bool
+
+    static let defaults = BackgroundPreferences(
+        launchAtLogin: true,
+        runInBackground: true,
+        relaunchOnCrash: true
+    )
+}
+
 struct ProjectDeploymentStatus: Identifiable, Sendable {
     let watched: WatchedProject
     let deployment: Deployment?
@@ -50,6 +62,15 @@ final class DeploymentStore {
     var notificationsEnabled = true {
         didSet { UserDefaults.standard.set(notificationsEnabled, forKey: Keys.notificationsEnabled) }
     }
+    var launchAtLoginEnabled = true {
+        didSet { persistBackgroundPreferenceChange() }
+    }
+    var runInBackgroundEnabled = true {
+        didSet { persistBackgroundPreferenceChange() }
+    }
+    var relaunchOnCrashEnabled = true {
+        didSet { persistBackgroundPreferenceChange() }
+    }
     var selectedTeamId: String? = nil {
         didSet {
             persistSelectedTeamId()
@@ -87,11 +108,16 @@ final class DeploymentStore {
     private var pollTask: Task<Void, Never>?
     private var previousStatuses: [String: DeploymentState] = [:]
     private var token: String?
+    private var isLoadingPreferences = false
 
     private enum Keys {
         static let onboardingComplete = "onboardingComplete"
         static let showStatusText = "showStatusText"
         static let notificationsEnabled = "notificationsEnabled"
+        static let launchAtLogin = "launchAtLogin"
+        static let runInBackground = "runInBackground"
+        static let relaunchOnCrash = "relaunchOnCrash"
+        static let backgroundBehaviorConfigured = "backgroundBehaviorConfigured"
         static let selectedTeamId = "selectedTeamId"
         static let watchedProjects = "watchedProjects"
     }
@@ -101,6 +127,9 @@ final class DeploymentStore {
     }
 
     func bootstrap() {
+        BackgroundBehavior.markAppRunning()
+        applyDefaultBackgroundBehaviorIfNeeded()
+        syncBackgroundBehavior()
         token = KeychainStore.loadToken()
         isConnected = token != nil
 
@@ -187,7 +216,10 @@ final class DeploymentStore {
         persistAllPreferences()
     }
 
-    func completeOnboarding(watching selected: [WatchedProject]) async {
+    func completeOnboarding(
+        watching selected: [WatchedProject],
+        background preferences: BackgroundPreferences = .defaults
+    ) async {
         guard !selected.isEmpty else { return }
 
         isFinishingOnboarding = true
@@ -196,10 +228,22 @@ final class DeploymentStore {
 
         watchedProjects = selected
         hasCompletedOnboarding = true
+        configureBackgroundBehavior(preferences)
         persistAllPreferences()
 
         startPolling()
         await refreshNow()
+    }
+
+    func configureBackgroundBehavior(_ preferences: BackgroundPreferences) {
+        isLoadingPreferences = true
+        launchAtLoginEnabled = preferences.launchAtLogin
+        runInBackgroundEnabled = preferences.runInBackground
+        relaunchOnCrashEnabled = preferences.relaunchOnCrash
+        isLoadingPreferences = false
+
+        UserDefaults.standard.set(true, forKey: Keys.backgroundBehaviorConfigured)
+        syncBackgroundBehavior()
     }
 
     func reloadProjects() async {
@@ -343,10 +387,16 @@ final class DeploymentStore {
     }
 
     private func loadPreferences() {
+        isLoadingPreferences = true
+        defer { isLoadingPreferences = false }
+
         let defaults = UserDefaults.standard
         hasCompletedOnboarding = defaults.bool(forKey: Keys.onboardingComplete)
         showStatusText = defaults.object(forKey: Keys.showStatusText) as? Bool ?? true
         notificationsEnabled = defaults.object(forKey: Keys.notificationsEnabled) as? Bool ?? true
+        launchAtLoginEnabled = Self.loadBool(forKey: Keys.launchAtLogin, default: true)
+        runInBackgroundEnabled = Self.loadBool(forKey: Keys.runInBackground, default: true)
+        relaunchOnCrashEnabled = Self.loadBool(forKey: Keys.relaunchOnCrash, default: true)
         selectedTeamId = defaults.string(forKey: Keys.selectedTeamId)
         if let data = defaults.data(forKey: Keys.watchedProjects),
            let projects = try? JSONDecoder().decode([WatchedProject].self, from: data)
@@ -382,6 +432,42 @@ final class DeploymentStore {
 
     private func updateConnectedTeamName() {
         connectedTeamName = teams.first(where: { $0.id == selectedTeamId })?.displayName
+    }
+
+    private func applyDefaultBackgroundBehaviorIfNeeded() {
+        guard hasCompletedOnboarding else { return }
+        guard !UserDefaults.standard.bool(forKey: Keys.backgroundBehaviorConfigured) else { return }
+
+        configureBackgroundBehavior(
+            BackgroundPreferences(
+                launchAtLogin: Self.loadBool(forKey: Keys.launchAtLogin, default: true),
+                runInBackground: Self.loadBool(forKey: Keys.runInBackground, default: true),
+                relaunchOnCrash: Self.loadBool(forKey: Keys.relaunchOnCrash, default: true)
+            )
+        )
+    }
+
+    private func syncBackgroundBehavior() {
+        BackgroundBehavior.syncFromStoredPreferences(
+            launchAtLogin: launchAtLoginEnabled,
+            runInBackground: runInBackgroundEnabled,
+            relaunchOnCrash: relaunchOnCrashEnabled
+        )
+    }
+
+    private func persistBackgroundPreferenceChange() {
+        guard !isLoadingPreferences else { return }
+
+        UserDefaults.standard.set(launchAtLoginEnabled, forKey: Keys.launchAtLogin)
+        UserDefaults.standard.set(runInBackgroundEnabled, forKey: Keys.runInBackground)
+        UserDefaults.standard.set(relaunchOnCrashEnabled, forKey: Keys.relaunchOnCrash)
+        UserDefaults.standard.set(true, forKey: Keys.backgroundBehaviorConfigured)
+        syncBackgroundBehavior()
+    }
+
+    private static func loadBool(forKey key: String, default defaultValue: Bool) -> Bool {
+        guard UserDefaults.standard.object(forKey: key) != nil else { return defaultValue }
+        return UserDefaults.standard.bool(forKey: key)
     }
 }
 

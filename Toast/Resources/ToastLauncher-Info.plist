@@ -5,17 +5,13 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleExecutable</key>
-	<string>Toast</string>
-	<key>CFBundleIconFile</key>
-	<string>toast</string>
-	<key>CFBundleIconName</key>
-	<string>toast</string>
+	<string>ToastLauncher</string>
 	<key>CFBundleIdentifier</key>
-	<string>com.toast.app</string>
+	<string>com.toast.app.launcher</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>Toast</string>
+	<string>Toast Launcher</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -26,11 +22,5 @@
 	<string>14.0</string>
 	<key>LSUIElement</key>
 	<true/>
-	<key>NSHighResolutionCapable</key>
-	<true/>
-	<key>SUFeedURL</key>
-	<string>https://toast.asit.space/appcast.xml</string>
-	<key>SUPublicEDKey</key>
-	<string>/NJC3Hywm9QCBdL/t+IJefLM4M/keWe60DleHdHk6vU=</string>
 </dict>
 </plist>
