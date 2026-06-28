@@ -42,11 +42,12 @@ def main() -> int:
     if version_pattern.search(content):
         content = version_pattern.sub(item, content, count=1)
     else:
-        marker = "  </channel>"
-        if marker not in content:
+        channel_close = re.search(r"\n(\s*)</channel>", content)
+        if not channel_close:
             print("Invalid appcast.xml: missing channel close tag", file=sys.stderr)
             return 1
-        content = content.replace(marker, item + marker, 1)
+        marker = channel_close.group(0)
+        content = content.replace(marker, "\n" + item.rstrip() + marker, 1)
 
     appcast_path.write_text(content, encoding="utf-8")
     return 0
