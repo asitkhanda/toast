@@ -102,6 +102,17 @@ struct SettingsView: View {
                 .disabled(selectedProjectIDs.isEmpty || store.selectedTeamId == nil)
             }
 
+            Section("Keep running") {
+                Toggle("Launch at login", isOn: $store.launchAtLoginEnabled)
+                Toggle("Run in background", isOn: $store.runInBackgroundEnabled)
+                Toggle("Relaunch if it crashes", isOn: $store.relaunchOnCrashEnabled)
+                if BackgroundBehavior.launchAtLoginRequiresApproval || BackgroundBehavior.relaunchHelperRequiresApproval {
+                    Text("Approve Toast in System Settings → General → Login Items if macOS asks.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
             Section("Menu bar") {
                 Toggle("Show status text", isOn: $store.showStatusText)
                 Toggle("Notify on completion", isOn: $store.notificationsEnabled)
@@ -133,7 +144,9 @@ struct SettingsView: View {
             Task { await store.reloadProjects() }
         }
         .onDisappear {
-            AppActivation.restoreMenuBarOnlyPolicy()
+            if store.runInBackgroundEnabled {
+                AppActivation.restoreMenuBarOnlyPolicy()
+            }
         }
     }
 

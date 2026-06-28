@@ -4,11 +4,14 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 APP_NAME="Toast"
 EXECUTABLE_NAME="Toast"
+LAUNCHER_NAME="ToastLauncher"
 BUNDLE_ID="com.toast.app"
+LAUNCHER_BUNDLE_ID="com.toast.app.launcher"
 BUILD_DIR="$ROOT/.build/release"
 APP_DIR="$ROOT/dist/$APP_NAME.app"
 ENTITLEMENTS="$ROOT/Resources/Toast.entitlements"
 INFO_PLIST="$ROOT/Resources/Info.plist"
+LAUNCHER_INFO_PLIST="$ROOT/Resources/ToastLauncher-Info.plist"
 ICON_SOURCE="$ROOT/Resources/toast.icon"
 ICON_NAME="toast"
 
@@ -38,6 +41,15 @@ mkdir -p "$APP_DIR/Contents/Resources"
 cp "$BUILD_DIR/$EXECUTABLE_NAME" "$APP_DIR/Contents/MacOS/$EXECUTABLE_NAME"
 cp "$INFO_PLIST" "$APP_DIR/Contents/Info.plist"
 chmod +x "$APP_DIR/Contents/MacOS/$EXECUTABLE_NAME"
+
+LAUNCHER_APP_DIR="$APP_DIR/Contents/Library/LoginItems/ToastLauncher.app"
+mkdir -p "$LAUNCHER_APP_DIR/Contents/MacOS"
+cp "$BUILD_DIR/$LAUNCHER_NAME" "$LAUNCHER_APP_DIR/Contents/MacOS/$LAUNCHER_NAME"
+cp "$LAUNCHER_INFO_PLIST" "$LAUNCHER_APP_DIR/Contents/Info.plist"
+chmod +x "$LAUNCHER_APP_DIR/Contents/MacOS/$LAUNCHER_NAME"
+
+/usr/libexec/PlistBuddy -c "Add :CFBundleIdentifier string $LAUNCHER_BUNDLE_ID" "$LAUNCHER_APP_DIR/Contents/Info.plist" 2>/dev/null || \
+  /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier $LAUNCHER_BUNDLE_ID" "$LAUNCHER_APP_DIR/Contents/Info.plist"
 
 /usr/libexec/PlistBuddy -c "Add :CFBundleIdentifier string $BUNDLE_ID" "$APP_DIR/Contents/Info.plist" 2>/dev/null || \
   /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier $BUNDLE_ID" "$APP_DIR/Contents/Info.plist"
@@ -84,6 +96,7 @@ install_name_tool \
 
 echo "Signing (ad-hoc)..."
 codesign --force --deep --sign - "$APP_DIR/Contents/Frameworks/Sparkle.framework"
+codesign --force --sign - --options runtime "$LAUNCHER_APP_DIR"
 codesign --force --deep --sign - --entitlements "$ENTITLEMENTS" --options runtime "$APP_DIR"
 
 echo "Creating $ZIP_NAME..."

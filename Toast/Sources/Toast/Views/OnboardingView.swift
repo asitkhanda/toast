@@ -3,11 +3,13 @@ import SwiftUI
 private enum OnboardingStep: Int, CaseIterable {
     case connect = 1
     case selectProjects = 2
+    case keepRunning = 3
 
     var title: String {
         switch self {
         case .connect: "Connect"
         case .selectProjects: "Choose projects"
+        case .keepRunning: "Keep running"
         }
     }
 }
@@ -23,6 +25,9 @@ struct OnboardingView: View {
     @State private var errorMessage: String?
     @State private var successMessage: String?
     @State private var selectedProjectIDs: Set<String> = []
+    @State private var launchAtLogin = true
+    @State private var runInBackground = true
+    @State private var relaunchOnCrash = true
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -82,6 +87,8 @@ struct OnboardingView: View {
             "Link your Vercel account so the app can read deployment status."
         case .selectProjects:
             "Pick which projects to monitor. The menu bar icon updates automatically — every 5 seconds while building, otherwise every minute."
+        case .keepRunning:
+            "Toast works best when it stays in your menu bar. These options are recommended and turned on by default."
         }
     }
 
@@ -92,6 +99,8 @@ struct OnboardingView: View {
             connectStep
         case .selectProjects:
             selectProjectsStep
+        case .keepRunning:
+            keepRunningStep
         }
     }
 
@@ -200,6 +209,48 @@ struct OnboardingView: View {
         }
     }
 
+    private var keepRunningStep: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 12) {
+                Toggle(isOn: $launchAtLogin) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Launch at login")
+                        Text("Start Toast automatically when you sign in.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                Toggle(isOn: $runInBackground) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Run in background")
+                        Text("Keep Toast in the menu bar without a Dock icon.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                Toggle(isOn: $relaunchOnCrash) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Relaunch if it crashes")
+                        Text("Restart Toast automatically if it stops unexpectedly.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+            .toggleStyle(.switch)
+
+            if launchAtLogin && BackgroundBehavior.launchAtLoginRequiresApproval {
+                Label("You may need to approve Toast in System Settings → General → Login Items.", systemImage: "info.circle")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            feedbackBanner
+        }
+    }
+
     @ViewBuilder
     private var feedbackBanner: some View {
         if let errorMessage {
@@ -221,9 +272,11 @@ struct OnboardingView: View {
 
     private var footer: some View {
         HStack {
-            if step == .selectProjects {
+            if step == .selectProjects || step == .keepRunning {
                 Button("Back") {
-                    withAnimation { step = .connect }
+                    withAnimation {
+                        step = step == .keepRunning ? .selectProjects : .connect
+                    }
                     errorMessage = nil
                     successMessage = nil
                 }
@@ -248,6 +301,15 @@ struct OnboardingView: View {
 
             case .selectProjects:
                 Button {
+                    withAnimation { step = .keepRunning }
+                } label: {
+                    Text("Continue")
+                }
+                .keyboardShortcut(.defaultAction)
+                .disabled(selectedProjectIDs.isEmpty)
+
+            case .keepRunning:
+                Button {
                     Task { await finishOnboarding() }
                 } label: {
                     if isStarting || store.isFinishingOnboarding {
@@ -256,11 +318,11 @@ struct OnboardingView: View {
                             Text("Starting…")
                         }
                     } else {
-                        Text("Start watching")
+                        Text("Finish setup")
                     }
                 }
                 .keyboardShortcut(.defaultAction)
-                .disabled(selectedProjectIDs.isEmpty || isStarting || store.isFinishingOnboarding)
+                .disabled(isStarting || store.isFinishingOnboarding)
             }
         }
     }
@@ -326,6 +388,13 @@ struct OnboardingView: View {
         successMessage = nil
         defer { isStarting = false }
 
-        await store.completeOnboarding(watching: selected)
+        await store.completeOnboarding(
+            watching: selected,
+            background: BackgroundPreferences(
+                launchAtLogin: launchAtLogin,
+                runInBackground: runInBackground,
+                relaunchOnCrash: relaunchOnCrash
+            )
+        )
     }
 }
