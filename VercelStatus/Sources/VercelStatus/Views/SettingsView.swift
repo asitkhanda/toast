@@ -18,12 +18,14 @@ struct SettingsView: View {
             Section("Account") {
                 HStack {
                     if showToken {
-                        TextField("Token", text: $token)
+                        TextField("Personal Access Token", text: $token, prompt: Text("vercel_..."))
                     } else {
-                        SecureField("Token", text: $token)
+                        SecureField("Personal Access Token", text: $token, prompt: Text("vercel_..."))
                     }
                     Button(showToken ? "Hide" : "Show") { showToken.toggle() }
                 }
+
+                TokenHelpLink()
 
                 HStack {
                     Button("Save token") {

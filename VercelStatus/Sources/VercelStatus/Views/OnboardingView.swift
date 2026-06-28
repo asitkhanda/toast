@@ -116,9 +116,7 @@ struct OnboardingView: View {
                     }
                 }
 
-                Text("Create a token at vercel.com/account/settings/tokens")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                TokenHelpLink()
             }
 
             feedbackBanner
