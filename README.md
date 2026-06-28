@@ -2,14 +2,14 @@
 
 A macOS menu bar app that shows live Vercel deployment status for your watched projects.
 
-- **Download:** [github.com/asitkhanda/toast/releases/latest](https://github.com/asitkhanda/toast/releases/latest)
+- **Download:** [toast.asit.space/download](https://toast.asit.space/download)
 - **Update feed:** [toast.asit.space/appcast.xml](https://toast.asit.space/appcast.xml)
 - **Landing page:** [toast.asit.space](https://toast.asit.space)
 
 ## Install
 
-1. Download the latest `Vercel-Status-X.Y.Z.zip` from [GitHub Releases](https://github.com/asitkhanda/toast/releases).
-2. Unzip and move **Vercel Status.app** to Applications (or anywhere you prefer).
+1. Download from [toast.asit.space/download](https://toast.asit.space/download) (redirects to the latest `.dmg`).
+2. Open the DMG and drag **Vercel Status** into **Applications**.
 3. **First launch:** right-click the app and choose **Open** (required because the app is not notarized).
 4. Complete onboarding with your [Vercel personal access token](https://vercel.com/account/tokens).
 
@@ -29,7 +29,9 @@ Requires macOS 14+ and Xcode command-line tools.
 
 ```
 ├── VercelStatus/          # macOS app (Swift + Sparkle)
-├── web/                   # Static site for Vercel (appcast + landing page)
+├── web/                   # Static site + /download redirect (Vercel)
+│   ├── api/download.ts    # Edge function → latest .dmg on GitHub Releases
+│   └── public/            # Landing page + appcast feed
 └── .github/workflows/     # Release automation
 ```
 
@@ -70,10 +72,12 @@ Never commit the private key. The file is listed in `.gitignore`.
 1. Import the GitHub repo in [Vercel](https://vercel.com).
 2. Set **Root Directory** to `web`.
 3. Set **Output Directory** to `public` (Build Command can stay empty).
-4. Deploy (static site — no build command required).
+4. Deploy (static site plus one Edge Function — no build command required).
 5. Add custom domain **`toast.asit.space`** in Vercel → Domains.
 6. In your DNS provider for `asit.space`, add the CNAME record Vercel shows (typically `toast` → `cname.vercel-dns.com`).
-7. Verify [https://toast.asit.space/](https://toast.asit.space/) shows the landing page and [https://toast.asit.space/appcast.xml](https://toast.asit.space/appcast.xml) returns XML over HTTPS.
+7. Verify [https://toast.asit.space/](https://toast.asit.space/) shows the landing page, [https://toast.asit.space/download](https://toast.asit.space/download) redirects to the latest DMG, and [https://toast.asit.space/appcast.xml](https://toast.asit.space/appcast.xml) returns XML over HTTPS.
+
+Optional: set **`GITHUB_REPO`** (e.g. `owner/repo`) if the repo slug differs from `asitkhanda/toast`.
 
 ## Releasing a new version
 
@@ -91,8 +95,9 @@ Never commit the private key. The file is listed in `.gitignore`.
 The [Release workflow](.github/workflows/release.yml) will:
 
 - Build and ad-hoc sign the app
+- Create a DMG for manual install and a zip for Sparkle updates
 - Sign the zip with Sparkle EdDSA
-- Create a GitHub Release with the zip asset
+- Create a GitHub Release with both assets
 - Update `web/public/appcast.xml` and push to `main`
 - Trigger a Vercel redeploy of the appcast feed
 

@@ -1,4 +1,10 @@
 {
+  "rewrites": [
+    {
+      "source": "/download",
+      "destination": "/api/download"
+    }
+  ],
   "headers": [
     {
       "source": "/appcast.xml",
