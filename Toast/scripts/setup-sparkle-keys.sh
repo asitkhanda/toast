@@ -4,6 +4,13 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
+PURGE_LOCAL=false
+for arg in "$@"; do
+  case "$arg" in
+    --purge-local) PURGE_LOCAL=true ;;
+  esac
+done
+
 swift package resolve
 
 GENERATE_KEYS="$(find .build/artifacts -path "*/Sparkle/bin/generate_keys" | head -1)"
@@ -42,4 +49,15 @@ echo ""
 echo "Add the private key to GitHub repo secrets as SPARKLE_PRIVATE_KEY:"
 echo "  cat \"$PRIVATE_KEY_FILE\""
 echo ""
-echo "The private key file is gitignored. Back it up securely."
+echo "Security:"
+echo "  - Never commit the private key (it is gitignored)."
+echo "  - Store a backup in a password manager, not in the repo."
+echo "  - Delete the local export after uploading to GitHub Secrets:"
+echo "      rm \"$PRIVATE_KEY_FILE\""
+echo "  - Or rerun this script with --purge-local after the secret is configured."
+
+if [ "$PURGE_LOCAL" = true ]; then
+  rm -f "$PRIVATE_KEY_FILE"
+  echo ""
+  echo "Deleted local private key export."
+fi

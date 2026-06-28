@@ -42,6 +42,7 @@ enum MenuBarIcon {
 
 struct MenuBarLabel: View {
     @Environment(DeploymentStore.self) private var store
+    @Environment(SparkleUpdater.self) private var updater
 
     var body: some View {
         HStack(spacing: 4) {
@@ -52,6 +53,7 @@ struct MenuBarLabel: View {
             }
         }
         .task {
+            updater.startIfNeeded()
             store.bootstrap()
         }
     }

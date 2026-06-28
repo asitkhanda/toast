@@ -7,10 +7,6 @@ struct ToastApp: App {
     @State private var store = DeploymentStore()
     @State private var updater = SparkleUpdater()
 
-    init() {
-        NSApp.setActivationPolicy(.accessory)
-    }
-
     var body: some Scene {
         MenuBarExtra {
             Group {
@@ -26,6 +22,7 @@ struct ToastApp: App {
         } label: {
             MenuBarLabel()
                 .environment(store)
+                .environment(updater)
         }
         .menuBarExtraStyle(.window)
 
@@ -33,6 +30,7 @@ struct ToastApp: App {
             SettingsView()
                 .environment(store)
                 .environment(updater)
+                .task { updater.startIfNeeded() }
         }
         .windowResizability(.contentSize)
     }

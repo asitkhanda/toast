@@ -48,6 +48,14 @@ jobs:
           cd Toast
           ./build.sh
 
+      - name: Generate checksums
+        id: checksums
+        run: |
+          cd Toast/dist
+          shasum -a 256 *.dmg *.zip > SHA256SUMS.txt
+          echo "checksums_path=Toast/dist/SHA256SUMS.txt" >> "$GITHUB_OUTPUT"
+          cat SHA256SUMS.txt
+
       - name: Sign update archive
         id: sign
         env:
@@ -83,6 +91,7 @@ jobs:
           files: |
             Toast/dist/${{ steps.version.outputs.dmg_name }}
             Toast/dist/${{ steps.version.outputs.zip_name }}
+            Toast/dist/SHA256SUMS.txt
 
       - name: Update appcast
         env:

@@ -11,7 +11,7 @@ A macOS menu bar app that shows live Vercel deployment status for your watched p
 1. Download from [toast.asit.space/download](https://toast.asit.space/download) (redirects to the latest `.dmg`).
 2. Open the DMG and drag **Toast** into **Applications**.
 3. **First launch:** right-click the app and choose **Open** (required because the app is not notarized).
-4. Complete onboarding with your [Vercel personal access token](https://vercel.com/account/tokens).
+4. Complete onboarding with a **read-only, team-scoped** [Vercel personal access token](https://vercel.com/account/tokens).
 
 Automatic updates are delivered via [Sparkle](https://sparkle-project.org/) after the first install.
 
@@ -103,9 +103,33 @@ The [Release workflow](.github/workflows/release.yml) will:
 
 Installed apps check `https://toast.asit.space/appcast.xml` automatically and via **Check for Updates…** in Settings.
 
-## Distribution notes (no Apple Developer Program)
+## Security
 
-This project uses **ad-hoc code signing** (`codesign --sign -`) without notarization. Users may see Gatekeeper warnings on first install and occasionally after updates. Documented on the landing page and above.
+### Vercel tokens
+
+- Tokens are stored in the macOS Keychain with app-scoped access control (`SecAccess` + `WhenUnlockedThisDeviceOnly`).
+- Tokens are loaded from Keychain only when needed for API calls — not kept in long-lived app state or pre-filled in Settings.
+- Use a **read-only, team-scoped** Vercel personal access token. Toast warns if a token appears to have elevated account access (e.g. can list account tokens).
+- Never commit tokens, `.env` files, or `Toast/sparkle-private-key`.
+
+### Release integrity
+
+- Each GitHub Release includes `SHA256SUMS.txt` for the DMG and Sparkle zip.
+- Verify downloads before opening: `shasum -a 256 Toast-*.dmg` and compare with the release manifest.
+- Sparkle updates are EdDSA-signed; the public key is embedded in the app (`SUPublicEDKey` in `Info.plist`).
+
+### GitHub & CI
+
+- Keep `SPARKLE_PRIVATE_KEY` in GitHub Actions secrets only — delete the local export after setup (`Toast/scripts/setup-sparkle-keys.sh --purge-local`).
+- Enable branch protection on `main`: require PR reviews, block force pushes, and restrict who can push tags or run the Release workflow.
+
+### Code signing
+
+This project currently uses **ad-hoc signing** without notarization. Users may see Gatekeeper warnings on first install and occasionally after updates.
+
+`com.apple.security.cs.disable-library-validation` is required so the ad-hoc-signed app can load the embedded Sparkle.framework (signed by a different identity). Remove it only when the app and all embedded frameworks share the same Developer ID signature.
+
+When you join the Apple Developer Program, switch to Developer ID signing + notarization for stronger install/update trust.
 
 CI builds are **arm64** (Apple Silicon). macOS 14+ is required.
 

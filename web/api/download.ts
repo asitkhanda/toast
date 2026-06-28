@@ -13,6 +13,20 @@ interface GitHubRelease {
   assets: ReleaseAsset[];
 }
 
+function parseChecksum(manifest: string, fileName: string): string | undefined {
+  for (const line of manifest.split("\n")) {
+    const trimmed = line.trim();
+    if (!trimmed || !trimmed.includes(fileName)) {
+      continue;
+    }
+    const [checksum] = trimmed.split(/\s+/);
+    if (checksum?.length === 64) {
+      return checksum;
+    }
+  }
+  return undefined;
+}
+
 export default async function handler(): Promise<Response> {
   const response = await fetch(
     `https://api.github.com/repos/${GITHUB_REPO}/releases/latest`,
@@ -36,11 +50,33 @@ export default async function handler(): Promise<Response> {
     return new Response("No DMG found for latest release.", { status: 404 });
   }
 
+  const checksumsAsset = release.assets.find(
+    (asset) => asset.name === "SHA256SUMS.txt",
+  );
+
+  let checksum: string | undefined;
+  if (checksumsAsset) {
+    const checksumsResponse = await fetch(checksumsAsset.browser_download_url, {
+      headers: { "User-Agent": "Toast-Download" },
+    });
+    if (checksumsResponse.ok) {
+      checksum = parseChecksum(await checksumsResponse.text(), dmg.name);
+    }
+  }
+
+  const headers: Record<string, string> = {
+    Location: dmg.browser_download_url,
+    "Cache-Control": "public, max-age=300",
+  };
+
+  if (checksum) {
+    headers["X-Toast-SHA256"] = checksum;
+    headers["X-Toast-Verify"] =
+      "Compare with SHA256SUMS.txt on the GitHub release before opening the DMG.";
+  }
+
   return new Response(null, {
     status: 302,
-    headers: {
-      Location: dmg.browser_download_url,
-      "Cache-Control": "public, max-age=300",
-    },
+    headers,
   });
 }

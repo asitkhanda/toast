@@ -102,6 +102,12 @@
           <strong>Open</strong> (required because the app is not notarized). Confirm when macOS asks.
         </p>
         <p>Automatic updates are delivered via Sparkle once the app is installed.</p>
+        <p>
+          Before opening the DMG, verify its SHA-256 checksum against
+          <strong>SHA256SUMS.txt</strong> on the
+          <a href="https://github.com/asitkhanda/toast/releases/latest">GitHub release</a>:
+        </p>
+        <pre style="margin: 0.75rem 0 0; padding: 0.75rem; overflow-x: auto; background: #18181b; border-radius: 0.375rem; font-size: 0.75rem;">shasum -a 256 ~/Downloads/Toast-*.dmg</pre>
       </div>
       <footer>
         <a href="https://github.com/asitkhanda/toast">View source on GitHub</a>

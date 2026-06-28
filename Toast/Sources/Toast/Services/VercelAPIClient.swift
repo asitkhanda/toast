@@ -32,6 +32,13 @@ enum VercelAPIError: LocalizedError {
     }
 }
 
+struct TokenValidation: Sendable {
+    let scopeWarning: String?
+
+    static let readOnlyRecommendation =
+        "For best security, create a Vercel token with read-only access scoped to the teams you need."
+}
+
 struct VercelAPIClient: Sendable {
     let token: String
     private let session: URLSession
@@ -72,8 +79,39 @@ struct VercelAPIClient: Sendable {
         return response.asDeployment(fallbackID: id)
     }
 
-    func validateToken() async throws {
+    func validateToken() async throws -> TokenValidation {
         _ = try await listTeams()
+        let elevatedAccess = await hasElevatedAccountAccess()
+        let scopeWarning = elevatedAccess ? TokenValidation.readOnlyRecommendation : nil
+        return TokenValidation(scopeWarning: scopeWarning)
+    }
+
+    /// Tokens that can manage account credentials likely exceed read-only deployment monitoring.
+    private func hasElevatedAccountAccess() async -> Bool {
+        await requestSucceeded("/v3/user/tokens", query: ["limit": "1"])
+    }
+
+    private func requestSucceeded(_ path: String, query: [String: String] = [:]) async -> Bool {
+        guard var components = URLComponents(string: "https://api.vercel.com\(path)") else {
+            return false
+        }
+        if !query.isEmpty {
+            components.queryItems = query.map { URLQueryItem(name: $0.key, value: $0.value) }
+        }
+        guard let url = components.url else { return false }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+
+        do {
+            let (_, response) = try await session.data(for: request)
+            guard let http = response as? HTTPURLResponse else { return false }
+            return (200 ..< 300).contains(http.statusCode)
+        } catch {
+            return false
+        }
     }
 
     private func get<T: Decodable>(_ path: String, query: [String: String] = [:]) async throws -> T {

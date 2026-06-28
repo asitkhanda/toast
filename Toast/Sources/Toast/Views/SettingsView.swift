@@ -7,6 +7,8 @@ struct SettingsView: View {
 
     @State private var token = ""
     @State private var showToken = false
+    @State private var isEditingToken = false
+    @State private var hasStoredToken = false
     @State private var selectedProjectIDs: Set<String> = []
     @State private var statusMessage: String?
     @State private var isSavingToken = false
@@ -16,28 +18,50 @@ struct SettingsView: View {
         @Bindable var store = store
         Form {
             Section("Account") {
-                HStack {
-                    if showToken {
-                        TextField("Personal Access Token", text: $token, prompt: Text("vercel_..."))
-                    } else {
-                        SecureField("Personal Access Token", text: $token, prompt: Text("vercel_..."))
+                if hasStoredToken && !isEditingToken {
+                    HStack {
+                        Label("Token saved in Keychain", systemImage: "checkmark.seal.fill")
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        Button("Replace token…") {
+                            beginTokenEdit()
+                        }
                     }
-                    Button(showToken ? "Hide" : "Show") { showToken.toggle() }
+                } else {
+                    HStack {
+                        if showToken {
+                            TextField("Personal Access Token", text: $token, prompt: Text("vercel_..."))
+                        } else {
+                            SecureField("Personal Access Token", text: $token, prompt: Text("vercel_..."))
+                        }
+                        Button(showToken ? "Hide" : "Show") { showToken.toggle() }
+                    }
+
+                    if isEditingToken {
+                        Button("Cancel") {
+                            cancelTokenEdit()
+                        }
+                    }
                 }
 
                 TokenHelpLink()
 
-                HStack {
-                    Button("Save token") {
-                        Task { await saveToken() }
-                    }
-                    .disabled(isSavingToken)
+                if isEditingToken || !hasStoredToken {
+                    HStack {
+                        Button(hasStoredToken ? "Save new token" : "Save token") {
+                            Task { await saveToken() }
+                        }
+                        .disabled(isSavingToken || token.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
 
+                        if hasStoredToken || store.isConnected {
+                            Button("Disconnect", role: .destructive) {
+                                disconnectAccount()
+                            }
+                        }
+                    }
+                } else if store.isConnected {
                     Button("Disconnect", role: .destructive) {
-                        store.disconnect()
-                        token = ""
-                        selectedProjectIDs = []
-                        statusMessage = "Disconnected."
+                        disconnectAccount()
                     }
                 }
 
@@ -50,6 +74,12 @@ struct SettingsView: View {
                     Text(statusMessage)
                         .font(.caption)
                         .foregroundStyle(.secondary)
+                }
+
+                if let scopeWarning = store.tokenScopeWarning, hasStoredToken, !isEditingToken {
+                    Text(scopeWarning)
+                        .font(.caption)
+                        .foregroundStyle(.orange)
                 }
             }
 
@@ -144,6 +174,7 @@ struct SettingsView: View {
             Task { await store.reloadProjects() }
         }
         .onDisappear {
+            clearTokenFromMemory()
             if store.runInBackgroundEnabled {
                 AppActivation.restoreMenuBarOnlyPolicy()
             }
@@ -151,7 +182,7 @@ struct SettingsView: View {
     }
 
     private func loadSettingsSession() async {
-        token = KeychainStore.loadToken() ?? ""
+        hasStoredToken = KeychainStore.hasToken()
         selectedProjectIDs = Set(store.watchedProjects.map(\.projectId))
 
         isLoadingSession = true
@@ -161,6 +192,33 @@ struct SettingsView: View {
         selectedProjectIDs = Set(store.watchedProjects.map(\.projectId))
     }
 
+    private func beginTokenEdit() {
+        isEditingToken = true
+        token = ""
+        showToken = false
+        statusMessage = nil
+    }
+
+    private func cancelTokenEdit() {
+        isEditingToken = false
+        clearTokenFromMemory()
+        statusMessage = nil
+    }
+
+    private func clearTokenFromMemory() {
+        token = ""
+        showToken = false
+    }
+
+    private func disconnectAccount() {
+        store.disconnect()
+        hasStoredToken = false
+        isEditingToken = false
+        clearTokenFromMemory()
+        selectedProjectIDs = []
+        statusMessage = "Disconnected."
+    }
+
     private func saveToken() async {
         isSavingToken = true
         statusMessage = nil
@@ -168,6 +226,9 @@ struct SettingsView: View {
 
         do {
             try await store.connect(token: token)
+            hasStoredToken = true
+            isEditingToken = false
+            clearTokenFromMemory()
             selectedProjectIDs = Set(store.watchedProjects.map(\.projectId))
             statusMessage = "Token saved. Connected to \(store.connectedTeamName ?? "Vercel")."
         } catch {

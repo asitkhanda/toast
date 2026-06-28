@@ -4,9 +4,10 @@ import Sparkle
 @MainActor
 @Observable
 final class SparkleUpdater {
-    private let controller: SPUStandardUpdaterController
+    private var controller: SPUStandardUpdaterController?
 
-    init() {
+    func startIfNeeded() {
+        guard controller == nil else { return }
         controller = SPUStandardUpdaterController(
             startingUpdater: true,
             updaterDelegate: nil,
@@ -23,6 +24,7 @@ final class SparkleUpdater {
     }
 
     func checkForUpdates() {
-        controller.checkForUpdates(nil)
+        startIfNeeded()
+        controller?.checkForUpdates(nil)
     }
 }

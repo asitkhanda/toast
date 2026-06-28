@@ -84,6 +84,7 @@ final class DeploymentStore {
     private(set) var isLoading = false
     private(set) var isFinishingOnboarding = false
     private(set) var lastError: String?
+    private(set) var tokenScopeWarning: String?
     private(set) var lastRefresh: Date?
     private(set) var isConnected = false
     private(set) var connectedTeamName: String?
@@ -107,8 +108,12 @@ final class DeploymentStore {
 
     private var pollTask: Task<Void, Never>?
     private var previousStatuses: [String: DeploymentState] = [:]
-    private var token: String?
     private var isLoadingPreferences = false
+
+    private func makeAPIClient() -> VercelAPIClient? {
+        guard let token = KeychainStore.loadToken() else { return nil }
+        return VercelAPIClient(token: token)
+    }
 
     private enum Keys {
         static let onboardingComplete = "onboardingComplete"
@@ -130,23 +135,21 @@ final class DeploymentStore {
         BackgroundBehavior.markAppRunning()
         applyDefaultBackgroundBehaviorIfNeeded()
         syncBackgroundBehavior()
-        token = KeychainStore.loadToken()
-        isConnected = token != nil
+        isConnected = KeychainStore.hasToken()
 
-        if hasCompletedOnboarding, token != nil {
+        if hasCompletedOnboarding, KeychainStore.hasToken() {
             Task {
                 await restoreSessionIfNeeded()
                 startPolling()
             }
-        } else if token != nil, !hasCompletedOnboarding {
+        } else if KeychainStore.hasToken(), !hasCompletedOnboarding {
             Task { await restoreSessionAfterTokenSaved() }
         }
     }
 
     /// Reloads teams and projects from the saved token (e.g. after app restart or opening Settings).
     func restoreSessionIfNeeded() async {
-        guard let savedToken = KeychainStore.loadToken() else { return }
-        token = savedToken
+        guard KeychainStore.hasToken() else { return }
 
         guard teams.isEmpty || projects.isEmpty else {
             updateConnectedTeamName()
@@ -154,8 +157,9 @@ final class DeploymentStore {
             return
         }
 
+        guard let client = makeAPIClient() else { return }
+
         do {
-            let client = VercelAPIClient(token: savedToken)
             teams = try await client.listTeams()
             if selectedTeamId == nil {
                 selectedTeamId = teams.first?.id
@@ -183,10 +187,10 @@ final class DeploymentStore {
         defer { isLoading = false }
 
         let client = VercelAPIClient(token: trimmed)
-        try await client.validateToken()
+        let validation = try await client.validateToken()
         try KeychainStore.saveToken(trimmed)
-        self.token = trimmed
         isConnected = true
+        tokenScopeWarning = validation.scopeWarning
         lastError = nil
 
         teams = try await client.listTeams()
@@ -203,7 +207,6 @@ final class DeploymentStore {
     func disconnect() {
         stopPolling()
         KeychainStore.deleteToken()
-        token = nil
         isConnected = false
         connectedTeamName = nil
         hasCompletedOnboarding = false
@@ -213,6 +216,7 @@ final class DeploymentStore {
         watchedProjects = []
         selectedTeamId = nil
         lastError = nil
+        tokenScopeWarning = nil
         persistAllPreferences()
     }
 
@@ -247,11 +251,11 @@ final class DeploymentStore {
     }
 
     func reloadProjects() async {
-        guard let token, let teamId = selectedTeamId else { return }
+        guard KeychainStore.hasToken(), let teamId = selectedTeamId else { return }
         isLoading = true
         defer { isLoading = false }
+        guard let client = makeAPIClient() else { return }
         do {
-            let client = VercelAPIClient(token: token)
             projects = try await client.listProjects(teamId: teamId)
             lastError = nil
         } catch {
@@ -283,7 +287,7 @@ final class DeploymentStore {
     }
 
     private func restoreSessionAfterTokenSaved() async {
-        guard let token = KeychainStore.loadToken() else { return }
+        guard KeychainStore.hasToken(), let token = KeychainStore.loadToken() else { return }
         do {
             try await connect(token: token)
         } catch {
@@ -305,7 +309,7 @@ final class DeploymentStore {
     }
 
     private func refresh(minIntervalSinceLastSuccess: TimeInterval) async {
-        guard let token else { return }
+        guard KeychainStore.hasToken(), let client = makeAPIClient() else { return }
         guard !watchedProjects.isEmpty else {
             projectStatuses = []
             return
@@ -321,7 +325,6 @@ final class DeploymentStore {
         isLoading = true
         defer { isLoading = false }
 
-        let client = VercelAPIClient(token: token)
         var results: [ProjectDeploymentStatus] = []
         var fetchError: String?
 

@@ -24,6 +24,7 @@ struct OnboardingView: View {
     @State private var isStarting = false
     @State private var errorMessage: String?
     @State private var successMessage: String?
+    @State private var scopeWarningMessage: String?
     @State private var selectedProjectIDs: Set<String> = []
     @State private var launchAtLogin = true
     @State private var runInBackground = true
@@ -41,10 +42,7 @@ struct OnboardingView: View {
         }
         .frame(width: 420)
         .onAppear {
-            if let existing = KeychainStore.loadToken() {
-                token = existing
-            }
-            if store.isConnected {
+            if KeychainStore.hasToken(), store.isConnected {
                 step = .selectProjects
             }
         }
@@ -54,6 +52,10 @@ struct OnboardingView: View {
                     step = .selectProjects
                 }
             }
+        }
+        .onDisappear {
+            token = ""
+            showToken = false
         }
     }
 
@@ -260,6 +262,13 @@ struct OnboardingView: View {
                 .padding(10)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(.red.opacity(0.08), in: RoundedRectangle(cornerRadius: 8))
+        } else if let scopeWarningMessage {
+            Label(scopeWarningMessage, systemImage: "exclamationmark.shield.fill")
+                .font(.caption)
+                .foregroundStyle(.orange)
+                .padding(10)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(.orange.opacity(0.08), in: RoundedRectangle(cornerRadius: 8))
         } else if let successMessage {
             Label(successMessage, systemImage: "checkmark.circle.fill")
                 .font(.caption)
@@ -357,12 +366,16 @@ struct OnboardingView: View {
         isConnecting = true
         errorMessage = nil
         successMessage = nil
+        scopeWarningMessage = nil
         defer { isConnecting = false }
 
         do {
             try await store.connect(token: token)
+            token = ""
+            showToken = false
             await NotificationManager.shared.requestAuthorization()
             successMessage = "Connected successfully."
+            scopeWarningMessage = store.tokenScopeWarning
         } catch {
             errorMessage = error.localizedDescription
         }
