@@ -9,12 +9,12 @@
       <title>Version 0.1.0</title>
       <sparkle:version>1</sparkle:version>
       <sparkle:shortVersionString>0.1.0</sparkle:shortVersionString>
-      <pubDate>Sat, 28 Jun 2025 09:30:00 +0000</pubDate>
+      <pubDate>Sun, 28 Jun 2026 10:07:30 +0000</pubDate>
       <enclosure
         url="https://github.com/asitkhanda/toast/releases/download/v0.1.0/Vercel-Status-0.1.0.zip"
-        length="1261268"
+        length="1203739"
         type="application/octet-stream"
-        sparkle:edSignature="ArZkAtmI8GHBSbLOU/3Ysx2oVzVxm1LX6c/BmuSiQ9QJCeFwRADc9pnr3uheqt6ZwFR3Gxaq+XC/GxMXLlAaDA=="/>
+        sparkle:edSignature="r4JzR1gEIO3k8oECEQXCYhtJ5naP7Vz024RNS79HrXZ8lM4Cue2XG7ZoQhonXMLSY3VQmia25UyNMOd/yPfyDQ=="/>
     </item>
-  </channel>
+</channel>
 </rss>
