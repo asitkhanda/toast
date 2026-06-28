@@ -4,7 +4,7 @@ on:
   push:
     tags:
       - "v*"
-  workflow_dispatch:
+  workflow_dispatch: {}
 
 permissions:
   contents: write
@@ -73,7 +73,7 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name }}
+          tag_name: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || format('v{0}', steps.version.outputs.version) }}
           name: Vercel Status ${{ steps.version.outputs.version }}
           generate_release_notes: true
           files: VercelStatus/dist/${{ steps.version.outputs.zip_name }}
@@ -84,43 +84,9 @@ jobs:
           BUILD: ${{ steps.version.outputs.build }}
           ED_SIGNATURE: ${{ steps.sign.outputs.ed_signature }}
           LENGTH: ${{ steps.sign.outputs.length }}
-          TAG: ${{ github.ref_name }}
+          TAG: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || format('v{0}', steps.version.outputs.version) }}
           REPO: ${{ github.repository }}
-        run: |
-          python3 <<'PY'
-          import os
-          from pathlib import Path
-
-          version = os.environ["VERSION"]
-          build = os.environ["BUILD"]
-          ed_signature = os.environ["ED_SIGNATURE"]
-          length = os.environ["LENGTH"]
-          tag = os.environ["TAG"]
-          repo = os.environ["REPO"]
-          download_url = f"https://github.com/{repo}/releases/download/{tag}/Vercel-Status-{version}.zip"
-          pub_date = os.popen('LC_ALL=C date -u "+%a, %d %b %Y %H:%M:%S +0000"').read().strip()
-
-          item = f"""    <item>
-      <title>Version {version}</title>
-      <sparkle:version>{build}</sparkle:version>
-      <sparkle:shortVersionString>{version}</sparkle:shortVersionString>
-      <pubDate>{pub_date}</pubDate>
-      <enclosure
-        url="{download_url}"
-        length="{length}"
-        type="application/octet-stream"
-        sparkle:edSignature="{ed_signature}"/>
-    </item>
-  """
-
-          appcast_path = Path("web/public/appcast.xml")
-          content = appcast_path.read_text()
-          marker = "  </channel>"
-          if marker not in content:
-              raise SystemExit("Invalid appcast.xml: missing channel close tag")
-          updated = content.replace(marker, item + marker, 1)
-          appcast_path.write_text(updated)
-          PY
+        run: python3 scripts/update-appcast.py
 
       - name: Commit appcast
         run: |
