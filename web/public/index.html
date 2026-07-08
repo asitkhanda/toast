@@ -179,6 +179,93 @@
                 border-radius: 0.5rem;
             }
 
+            .install {
+                padding: 0 clamp(1.25rem, 4vw, 3rem) 4rem;
+                max-width: 72rem;
+                margin: 0 auto;
+            }
+
+            .install-header {
+                text-align: center;
+                margin-bottom: 2rem;
+            }
+
+            .install-header h2 {
+                font-family: "Crimson Text", Georgia, "Times New Roman", serif;
+                font-size: clamp(1.75rem, 3.5vw, 2.5rem);
+                font-weight: 400;
+                letter-spacing: -0.01em;
+                margin: 0 0 0.5rem;
+            }
+
+            .install-header p {
+                margin: 0;
+                color: var(--muted);
+                font-size: 1rem;
+                max-width: 36rem;
+                margin-inline: auto;
+            }
+
+            .checkpoints {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 1.25rem;
+            }
+
+            .checkpoint {
+                padding: 1.5rem 1.35rem 1.6rem;
+                border-radius: 1rem;
+                background: #fff8e6;
+                border: 1px solid rgba(10, 10, 10, 0.06);
+            }
+
+            .checkpoint-number {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 1.75rem;
+                height: 1.75rem;
+                border-radius: 9999px;
+                background: var(--orange);
+                color: #ffffff;
+                font-size: 0.875rem;
+                font-weight: 700;
+                margin-bottom: 0.875rem;
+            }
+
+            .checkpoint h3 {
+                margin: 0 0 0.5rem;
+                font-size: 1.0625rem;
+                font-weight: 650;
+                letter-spacing: -0.01em;
+            }
+
+            .checkpoint p {
+                margin: 0;
+                color: var(--muted);
+                font-size: 0.9375rem;
+                line-height: 1.55;
+            }
+
+            .checkpoint strong {
+                color: var(--text);
+                font-weight: 600;
+            }
+
+            .checkpoint .alt {
+                margin-top: 0.75rem;
+                padding-top: 0.75rem;
+                border-top: 1px solid rgba(10, 10, 10, 0.08);
+                font-size: 0.875rem;
+            }
+
+            .install-note {
+                margin: 1.5rem 0 0;
+                text-align: center;
+                color: var(--muted);
+                font-size: 0.875rem;
+            }
+
             .site-footer {
                 display: flex;
                 align-items: center;
@@ -274,6 +361,16 @@
                     flex-direction: column;
                     align-items: flex-start;
                 }
+
+                .checkpoints {
+                    grid-template-columns: 1fr;
+                }
+            }
+
+            @media (min-width: 641px) and (max-width: 900px) {
+                .checkpoints {
+                    grid-template-columns: 1fr;
+                }
             }
         </style>
     </head>
@@ -304,6 +401,65 @@
                         alt="Toast menu bar app showing Vercel deployment status for three projects"
                     />
                 </div>
+            </section>
+
+            <section class="install" id="install" aria-labelledby="install-heading">
+                <div class="install-header">
+                    <h2 id="install-heading">Install in three steps</h2>
+                    <p>
+                        Toast is not Apple-notarized yet, so macOS may warn on
+                        first launch. Follow these checkpoints — they are also
+                        printed on the DMG.
+                    </p>
+                </div>
+                <div class="checkpoints">
+                    <article class="checkpoint">
+                        <span class="checkpoint-number" aria-hidden="true"
+                            >1</span
+                        >
+                        <h3>Copy to Applications</h3>
+                        <p>
+                            Open the downloaded DMG and drag
+                            <strong>Toast</strong> into
+                            <strong>Applications</strong>. Don’t open it from
+                            the DMG itself.
+                        </p>
+                    </article>
+                    <article class="checkpoint">
+                        <span class="checkpoint-number" aria-hidden="true"
+                            >2</span
+                        >
+                        <h3>Allow Toast to open</h3>
+                        <p>
+                            In Applications,
+                            <strong>right-click Toast → Open → Open</strong>.
+                            That clears Gatekeeper in one step on most Macs.
+                        </p>
+                        <p class="alt">
+                            Fallback: double-click once (expect a warning), then
+                            <strong
+                                >System Settings → Privacy &amp; Security →
+                                Open Anyway</strong
+                            >.
+                        </p>
+                    </article>
+                    <article class="checkpoint">
+                        <span class="checkpoint-number" aria-hidden="true"
+                            >3</span
+                        >
+                        <h3>Connect Vercel</h3>
+                        <p>
+                            Paste a
+                            <strong>read-only, team-scoped</strong> Vercel
+                            token, pick projects to watch, and optionally enable
+                            notifications and Launch at Login.
+                        </p>
+                    </article>
+                </div>
+                <p class="install-note">
+                    Need the steps again later? Open
+                    <strong>How to Open Toast.txt</strong> on the DMG.
+                </p>
             </section>
         </main>
 

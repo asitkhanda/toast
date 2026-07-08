@@ -9,11 +9,13 @@ A macOS menu bar app that shows live Vercel deployment status for your watched p
 ## Install
 
 1. Download from [toast.asit.space/download](https://toast.asit.space/download) (redirects to the latest `.dmg`).
-2. Open the DMG and drag **Toast** into **Applications**.
-3. **First launch:** right-click the app and choose **Open** (required because the app is not notarized).
-4. Complete onboarding with a **read-only, team-scoped** [Vercel personal access token](https://vercel.com/account/tokens).
+2. Open the DMG and drag **Toast** into **Applications** (checkpoint 1 — also shown on the DMG background).
+3. **Allow first launch** (checkpoint 2 — Toast is not notarized yet):
+   - **Recommended:** in Applications, right-click **Toast** → **Open** → **Open**.
+   - **Fallback:** double-click once (expect the warning), then **System Settings → Privacy & Security → Open Anyway**.
+4. Complete onboarding with a **read-only, team-scoped** [Vercel personal access token](https://vercel.com/account/tokens), then pick projects to watch (checkpoint 3).
 
-Automatic updates are delivered via [Sparkle](https://sparkle-project.org/) after the first install.
+The DMG includes a **How to Open Toast.txt** guide with the same steps. Automatic updates are delivered via [Sparkle](https://sparkle-project.org/) after the first install.
 
 ## Build locally
 
@@ -29,6 +31,8 @@ Requires macOS 14+ and Xcode command-line tools.
 
 ```
 ├── Toast/                 # macOS app (Swift + Sparkle)
+│   ├── Resources/         # Info.plist, icon, DMG background + open guide
+│   └── scripts/           # DMG background generator + installer packaging
 ├── web/                   # Static site + /download redirect (Vercel)
 │   ├── api/download.ts    # Edge function → latest .dmg on GitHub Releases
 │   └── public/            # Landing page + appcast feed

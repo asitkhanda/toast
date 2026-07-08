@@ -1,0 +1,35 @@
+Install Toast — first launch
+
+Toast is distributed without Apple notarization, so macOS Gatekeeper
+will block the first open. Use one of the paths below.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1) Drag Toast into Applications
+   (do this from the DMG window)
+
+2) Recommended: right-click Open
+   • Open Applications
+   • Right-click Toast → Open
+   • Click Open in the dialog
+   This usually clears Gatekeeper in one step.
+
+3) Fallback: Privacy & Security → Open Anyway
+   • Double-click Toast once (expect the warning — that is required)
+   • Open System Settings → Privacy & Security
+   • Scroll to Security and click Open Anyway for Toast
+   • Confirm again when prompted
+
+4) Finish setup inside Toast
+   • Paste a read-only, team-scoped Vercel token
+   • Pick a team and the projects to watch
+   • Optionally enable notifications and Launch at Login
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Download & updates: https://toast.asit.space
+More help:         https://toast.asit.space/#install
+
+Verify release checksums (optional):
+  shasum -a 256 Toast-*.dmg
+Compare with SHA256SUMS.txt on the GitHub Release.

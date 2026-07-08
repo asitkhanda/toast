@@ -25,7 +25,6 @@ ZIP_NAME="Toast-${VERSION}.zip"
 ZIP_PATH="$ROOT/dist/$ZIP_NAME"
 DMG_NAME="Toast-${VERSION}.dmg"
 DMG_PATH="$ROOT/dist/$DMG_NAME"
-DMG_STAGING="$ROOT/dist/dmg-staging"
 
 echo "Building Toast (release)..."
 cd "$ROOT"
@@ -104,17 +103,9 @@ rm -f "$ZIP_PATH"
 ditto -c -k --keepParent "$APP_DIR" "$ZIP_PATH"
 
 echo "Creating $DMG_NAME..."
-rm -rf "$DMG_STAGING"
-mkdir -p "$DMG_STAGING"
-cp -R "$APP_DIR" "$DMG_STAGING/"
-ln -s /Applications "$DMG_STAGING/Applications"
-rm -f "$DMG_PATH"
-hdiutil create \
-    -volname "Toast" \
-    -srcfolder "$DMG_STAGING" \
-    -ov -format UDZO \
-    "$DMG_PATH"
-rm -rf "$DMG_STAGING"
+# Styled installer DMG with Gatekeeper checkpoints (falls back to plain DMG in CI).
+chmod +x "$ROOT/scripts/package-dmg.sh"
+"$ROOT/scripts/package-dmg.sh" "$APP_DIR" "$DMG_PATH"
 
 echo "Built: $APP_DIR"
 echo "Install: $DMG_PATH"
