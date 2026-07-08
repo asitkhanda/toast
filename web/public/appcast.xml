@@ -71,5 +71,16 @@
         type="application/octet-stream"
         sparkle:edSignature="eN2r7r3WcOyKTuW4iVgkd3QCZEt9TttlC75nrYyypUSMKtiXdMOdMI5ThYc2h/1YBUWjcnIiJ8AKD0W0Q2FbBg=="/>
     </item>
+    <item>
+      <title>Version 0.3.3</title>
+      <sparkle:version>9</sparkle:version>
+      <sparkle:shortVersionString>0.3.3</sparkle:shortVersionString>
+      <pubDate>Wed, 08 Jul 2026 14:57:01 +0000</pubDate>
+      <enclosure
+        url="https://github.com/asitkhanda/toast/releases/download/v0.3.3/Toast-0.3.3.zip"
+        length="4531618"
+        type="application/octet-stream"
+        sparkle:edSignature="F89HQr5gATB+OfxgQPlQ9rQD9RxgvdWrRkCxg5Tqlw/hzj25kLGiJ2Vvujlf52biaEwQT/QSj6GJ1IPEaFNWCA=="/>
+    </item>
 </channel>
 </rss>
