@@ -7,7 +7,7 @@ cask "toast-app" do
   desc "Menu bar app for live Vercel deployment status"
   homepage "https://toast.asit.space/"
 
-  depends_on macos: ">= :sonoma"
+  depends_on macos: :sonoma
   depends_on arch: :arm64
 
   app "Toast.app"

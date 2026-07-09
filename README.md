@@ -45,7 +45,7 @@ Requires macOS 14+ and Xcode command-line tools.
 ├── web/                   # Static site + /download redirect (Vercel)
 │   ├── api/download.ts    # Edge function → latest .dmg on GitHub Releases
 │   └── public/            # Landing page + appcast feed
-├── toast-tap/             # Homebrew tap (push to github.com/asitkhanda/toast-tap)
+├── toast-tap/             # Homebrew tap (push to github.com/asitkhanda/homebrew-toast-tap)
 │   └── Casks/toast-app.rb
 └── .github/workflows/     # Release automation
 ```
@@ -114,14 +114,14 @@ The [Release workflow](.github/workflows/release.yml) will:
 - Sign the zip with Sparkle EdDSA
 - Create a GitHub Release with both assets
 - Update `web/public/appcast.xml` and push to `main`
-- Bump the Homebrew cask in [asitkhanda/toast-tap](https://github.com/asitkhanda/toast-tap)
+- Bump the Homebrew cask in [asitkhanda/homebrew-toast-tap](https://github.com/asitkhanda/homebrew-toast-tap)
 - Trigger a Vercel redeploy of the appcast feed
 
 Installed apps check `https://toast.asit.space/appcast.xml` automatically and via **Check for Updates…** in Settings.
 
 ### Homebrew tap setup (one-time)
 
-Push the `toast-tap/` directory to a public GitHub repo named `toast-tap`:
+Push the `toast-tap/` directory to a public GitHub repo named `homebrew-toast-tap` (Homebrew requires the `homebrew-` prefix):
 
 ```bash
 cd toast-tap
@@ -129,7 +129,7 @@ git init
 git add .
 git commit -m "Add toast-app cask"
 git branch -M main
-git remote add origin git@github.com:asitkhanda/toast-tap.git
+git remote add origin git@github.com:asitkhanda/homebrew-toast-tap.git
 git push -u origin main
 ```
 

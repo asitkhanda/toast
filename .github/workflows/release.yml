@@ -115,7 +115,7 @@ jobs:
         env:
           VERSION: ${{ steps.version.outputs.version }}
           DMG_NAME: ${{ steps.version.outputs.dmg_name }}
-          TAP_REPO: asitkhanda/toast-tap
+          TAP_REPO: asitkhanda/homebrew-toast-tap
           GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN || secrets.GITHUB_TOKEN }}
         run: |
           DMG_SHA=$(awk -v dmg="$DMG_NAME" '$2 == dmg { print $1; exit }' Toast/dist/SHA256SUMS.txt)

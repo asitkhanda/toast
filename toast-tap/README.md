@@ -13,6 +13,8 @@ Toast updates automatically via Sparkle after install. Homebrew is only needed f
 
 ## Updating the cask
 
+GitHub repo: [asitkhanda/homebrew-toast-tap](https://github.com/asitkhanda/homebrew-toast-tap)
+
 The cask is bumped automatically when a new version is released in [asitkhanda/toast](https://github.com/asitkhanda/toast). To bump manually, use the script in the main Toast repo:
 
 ```bash
