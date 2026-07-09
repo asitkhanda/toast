@@ -8,6 +8,8 @@ public final class RuntimeState: @unchecked Sendable {
     private enum Keys {
         static let userInitiatedQuit = "userInitiatedQuit"
         static let relaunchOnCrashEnabled = "relaunchOnCrashEnabled"
+        static let pendingCrashReport = "pendingCrashReport"
+        static let crashPromptSuppressed = "crashPromptSuppressed"
     }
 
     public init() {
@@ -25,6 +27,16 @@ public final class RuntimeState: @unchecked Sendable {
     public var relaunchOnCrashEnabled: Bool {
         get { bool(forKey: Keys.relaunchOnCrashEnabled) ?? true }
         set { setBool(newValue, forKey: Keys.relaunchOnCrashEnabled) }
+    }
+
+    public var pendingCrashReport: Bool {
+        get { bool(forKey: Keys.pendingCrashReport) ?? false }
+        set { setBool(newValue, forKey: Keys.pendingCrashReport) }
+    }
+
+    public var crashPromptSuppressed: Bool {
+        get { bool(forKey: Keys.crashPromptSuppressed) ?? false }
+        set { setBool(newValue, forKey: Keys.crashPromptSuppressed) }
     }
 
     public func markAppRunning() {

@@ -6,13 +6,23 @@ struct MenuBarPopover: View {
     @Environment(SparkleUpdater.self) private var updater
     @Environment(\.openSettings) private var openSettings
 
+    @State private var showFeedbackSheet = false
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            header
-            Divider()
-            content
-            Divider()
-            footer
+        Group {
+            if showFeedbackSheet {
+                FeedbackSheet {
+                    showFeedbackSheet = false
+                }
+            } else {
+                VStack(alignment: .leading, spacing: 0) {
+                    header
+                    Divider()
+                    content
+                    Divider()
+                    footer
+                }
+            }
         }
         .frame(width: 380)
         .task {
@@ -181,6 +191,9 @@ struct MenuBarPopover: View {
             }
             Button("Check for Updates…") {
                 updater.checkForUpdates()
+            }
+            Button("Send Feedback…") {
+                showFeedbackSheet = true
             }
             Spacer()
             Button("Quit") {

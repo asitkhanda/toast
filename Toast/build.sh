@@ -31,6 +31,11 @@ cd "$ROOT"
 swift package resolve
 swift build -c release
 
+echo "Generating dSYM..."
+DSYM_PATH="$ROOT/dist/Toast.dSYM"
+rm -rf "$DSYM_PATH"
+dsymutil "$BUILD_DIR/$EXECUTABLE_NAME" -o "$DSYM_PATH"
+
 echo "Packaging $APP_NAME.app..."
 rm -rf "$APP_DIR"
 mkdir -p "$APP_DIR/Contents/MacOS"

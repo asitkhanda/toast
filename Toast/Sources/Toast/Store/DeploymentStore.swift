@@ -57,19 +57,34 @@ enum AggregateStatus: Sendable {
 final class DeploymentStore {
     var hasCompletedOnboarding = false
     var showStatusText = true {
-        didSet { UserDefaults.standard.set(showStatusText, forKey: Keys.showStatusText) }
+        didSet {
+            UserDefaults.standard.set(showStatusText, forKey: Keys.showStatusText)
+            trackSettingChanged("show_status_text", value: showStatusText, oldValue: oldValue)
+        }
     }
     var notificationsEnabled = true {
-        didSet { UserDefaults.standard.set(notificationsEnabled, forKey: Keys.notificationsEnabled) }
+        didSet {
+            UserDefaults.standard.set(notificationsEnabled, forKey: Keys.notificationsEnabled)
+            trackSettingChanged("notifications_enabled", value: notificationsEnabled, oldValue: oldValue)
+        }
     }
     var launchAtLoginEnabled = true {
-        didSet { persistBackgroundPreferenceChange() }
+        didSet {
+            persistBackgroundPreferenceChange()
+            trackSettingChanged("launch_at_login", value: launchAtLoginEnabled, oldValue: oldValue)
+        }
     }
     var runInBackgroundEnabled = true {
-        didSet { persistBackgroundPreferenceChange() }
+        didSet {
+            persistBackgroundPreferenceChange()
+            trackSettingChanged("run_in_background", value: runInBackgroundEnabled, oldValue: oldValue)
+        }
     }
     var relaunchOnCrashEnabled = true {
-        didSet { persistBackgroundPreferenceChange() }
+        didSet {
+            persistBackgroundPreferenceChange()
+            trackSettingChanged("relaunch_on_crash", value: relaunchOnCrashEnabled, oldValue: oldValue)
+        }
     }
     var selectedTeamId: String? = nil {
         didSet {
@@ -202,6 +217,7 @@ final class DeploymentStore {
         if let teamId = selectedTeamId {
             projects = try await client.listProjects(teamId: teamId)
         }
+        AnalyticsService.shared.capture("token_connected")
     }
 
     func disconnect() {
@@ -234,9 +250,13 @@ final class DeploymentStore {
         hasCompletedOnboarding = true
         configureBackgroundBehavior(preferences)
         persistAllPreferences()
+        AnalyticsService.shared.markAnalyticsRolloutNoticeSeen()
 
         startPolling()
         await refreshNow()
+        AnalyticsService.shared.capture("onboarding_completed", properties: [
+            "projects_watched_bucket": Diagnostics.projectsWatchedBucket(count: selected.count),
+        ])
     }
 
     func configureBackgroundBehavior(_ preferences: BackgroundPreferences) {
@@ -327,6 +347,7 @@ final class DeploymentStore {
 
         var results: [ProjectDeploymentStatus] = []
         var fetchError: String?
+        var pollError: Error?
 
         for watched in watchedProjects {
             do {
@@ -344,6 +365,7 @@ final class DeploymentStore {
                 await handleStatusTransition(watched: watched, deployment: deployment)
             } catch {
                 fetchError = error.localizedDescription
+                pollError = error
                 if case VercelAPIError.unauthorized = error {
                     isConnected = false
                 }
@@ -358,7 +380,9 @@ final class DeploymentStore {
         projectStatuses = results
         lastRefresh = Date()
         lastError = fetchError
-        if fetchError == nil {
+        if let pollError {
+            AnalyticsService.shared.capturePollError(pollError)
+        } else if fetchError == nil {
             isConnected = true
         }
     }
@@ -471,6 +495,11 @@ final class DeploymentStore {
     private static func loadBool(forKey key: String, default defaultValue: Bool) -> Bool {
         guard UserDefaults.standard.object(forKey: key) != nil else { return defaultValue }
         return UserDefaults.standard.bool(forKey: key)
+    }
+
+    private func trackSettingChanged(_ setting: String, value: Bool, oldValue: Bool) {
+        guard !isLoadingPreferences, value != oldValue else { return }
+        AnalyticsService.shared.captureSettingChanged(setting, value: value)
     }
 }
 

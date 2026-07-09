@@ -26,6 +26,7 @@ private func launchMainApp() {
 private func checkAndRelaunchIfNeeded() {
     let state = RuntimeState.shared
     guard state.relaunchOnCrashEnabled, !state.userInitiatedQuit, !mainAppIsRunning() else { return }
+    state.pendingCrashReport = true
     launchMainApp()
 }
 

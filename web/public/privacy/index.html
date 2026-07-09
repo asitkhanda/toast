@@ -88,7 +88,7 @@
     <main>
       <a class="back" href="/">← Back to Toast</a>
       <h1>Privacy Policy</h1>
-      <p class="updated">Last updated: June 28, 2026</p>
+      <p class="updated">Last updated: July 9, 2026</p>
 
       <p>
         This Privacy Policy describes how <strong>Toast</strong> (the macOS menu bar application
@@ -98,9 +98,12 @@
 
       <h2>Summary</h2>
       <p>
-        Toast is designed to keep your data on your Mac. The app stores your Vercel personal access
-        token and preferences locally. It communicates directly with Vercel’s API to read deployment
-        status. Toast does not operate user accounts, analytics, or advertising on your behalf.
+        Toast is designed to keep your sensitive data on your Mac. The app stores your Vercel
+        personal access token and preferences locally. It communicates directly with Vercel’s API
+        to read deployment status. To improve reliability and fix bugs, Toast can optionally send
+        <strong>anonymous usage data and crash reports</strong> to our analytics provider when
+        “Help improve Toast” is enabled. We do not collect your name, email, Vercel token, team,
+        project names, or deployment details.
       </p>
 
       <h2>Information the app stores locally</h2>
@@ -122,6 +125,34 @@
         uninstalling Toast.
       </p>
 
+      <h2>Anonymous product analytics</h2>
+      <p>
+        When “Help improve Toast” is enabled (on by default; you can turn it off in Settings),
+        Toast sends anonymous diagnostic and usage information to
+        <a href="https://posthog.com/privacy">PostHog</a> to help us understand how the app is
+        used and to fix crashes. This data is used only to improve Toast — not for advertising or
+        profiling.
+      </p>
+      <p><strong>What we may collect:</strong></p>
+      <ul>
+        <li>App version and build number</li>
+        <li>macOS version and device architecture (for example, arm64)</li>
+        <li>Anonymous feature usage (for example, onboarding completed, settings toggles)</li>
+        <li>API error types and HTTP status codes (not request contents)</li>
+        <li>Crash stack traces and anonymous diagnostic reports you choose to send</li>
+        <li>Optional feedback message text if you use Send Feedback</li>
+      </ul>
+      <p><strong>What we do not collect through analytics:</strong></p>
+      <ul>
+        <li>Your Vercel personal access token</li>
+        <li>Team IDs, project names, deployment URLs, or commit messages</li>
+        <li>Your name, email address, or other personal identifiers</li>
+      </ul>
+      <p>
+        PostHog assigns a random anonymous identifier on your device. We do not use analytics to
+        spy on your Vercel activity — only to understand app health and improve the product.
+      </p>
+
       <h2>Information sent over the network</h2>
       <p>When you use Toast, the app may contact:</p>
       <ul>
@@ -131,6 +162,10 @@
         </li>
         <li>
           <strong>toast.asit.space</strong> — to check for app updates via the Sparkle appcast feed
+        </li>
+        <li>
+          <strong>PostHog</strong> (<a href="https://us.i.posthog.com">us.i.posthog.com</a>) —
+          anonymous usage and crash data when “Help improve Toast” is enabled
         </li>
       </ul>
       <p>
@@ -156,19 +191,22 @@
       <h2>What we do not collect</h2>
       <ul>
         <li>No Toast account or login is required</li>
-        <li>No usage analytics or crash reporting service is built into the app</li>
         <li>No sale or sharing of personal information for advertising</li>
+        <li>No Vercel tokens, project names, or deployment content sent to analytics</li>
       </ul>
 
       <h2>Third-party services</h2>
       <p>
         Your use of Vercel is governed by
-        <a href="https://vercel.com/legal/privacy-policy">Vercel’s privacy policy</a>. Downloads are
-        hosted on GitHub Releases; GitHub’s policies apply to that infrastructure.
+        <a href="https://vercel.com/legal/privacy-policy">Vercel’s privacy policy</a>. Analytics are
+        processed by
+        <a href="https://posthog.com/privacy">PostHog</a>. Downloads are hosted on GitHub
+        Releases; GitHub’s policies apply to that infrastructure.
       </p>
 
       <h2>Your choices</h2>
       <ul>
+        <li>Turn off anonymous analytics and crash reporting in Toast Settings at any time</li>
         <li>Disconnect your token at any time in Toast Settings</li>
         <li>Remove the app and its Keychain entry by uninstalling Toast</li>
         <li>Use a read-only, team-scoped Vercel token with the minimum access you need</li>

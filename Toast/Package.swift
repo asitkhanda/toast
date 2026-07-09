@@ -11,6 +11,7 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/sparkle-project/Sparkle", from: "2.6.0"),
+        .package(url: "https://github.com/PostHog/posthog-ios.git", from: "3.59.0"),
     ],
     targets: [
         .target(
@@ -19,7 +20,11 @@ let package = Package(
         ),
         .executableTarget(
             name: "Toast",
-            dependencies: ["Sparkle", "Shared"],
+            dependencies: [
+                "Sparkle",
+                "Shared",
+                .product(name: "PostHog", package: "posthog-ios"),
+            ],
             path: "Sources/Toast"
         ),
         .executableTarget(

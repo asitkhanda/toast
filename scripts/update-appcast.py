@@ -16,9 +16,15 @@ def main() -> int:
     download_url = f"https://github.com/{repo}/releases/download/{tag}/Toast-{version}.zip"
     pub_date = os.popen('LC_ALL=C date -u "+%a, %d %b %Y %H:%M:%S +0000"').read().strip()
 
+    release_notes_path = Path(f"scripts/release-notes/{version}.html")
+    description_block = ""
+    if release_notes_path.exists():
+        release_notes = release_notes_path.read_text(encoding="utf-8").strip()
+        description_block = f"      <description><![CDATA[\n{release_notes}\n      ]]></description>\n"
+
     item = f"""    <item>
       <title>Version {version}</title>
-      <sparkle:version>{build}</sparkle:version>
+{description_block}      <sparkle:version>{build}</sparkle:version>
       <sparkle:shortVersionString>{version}</sparkle:shortVersionString>
       <pubDate>{pub_date}</pubDate>
       <enclosure

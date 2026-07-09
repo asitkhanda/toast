@@ -48,6 +48,24 @@ jobs:
           cd Toast
           ./build.sh
 
+      - name: Upload dSYMs to PostHog
+        env:
+          POSTHOG_CLI_HOST: https://us.posthog.com
+          POSTHOG_CLI_API_KEY: ${{ secrets.POSTHOG_CLI_API_KEY }}
+          POSTHOG_CLI_PROJECT_ID: ${{ secrets.POSTHOG_CLI_PROJECT_ID }}
+        run: |
+          if [ -z "$POSTHOG_CLI_API_KEY" ] || [ -z "$POSTHOG_CLI_PROJECT_ID" ]; then
+            echo "Skipping PostHog dSYM upload — secrets not configured"
+            exit 0
+          fi
+          UPLOAD_SCRIPT="$(find Toast/.build/checkouts -path '*/posthog-ios/build-tools/upload-symbols.sh' 2>/dev/null | head -1)"
+          if [ -z "$UPLOAD_SCRIPT" ]; then
+            echo "PostHog upload-symbols.sh not found — skipping"
+            exit 0
+          fi
+          chmod +x "$UPLOAD_SCRIPT"
+          "$UPLOAD_SCRIPT" Toast/dist/Toast.dSYM
+
       - name: Generate checksums
         id: checksums
         run: |

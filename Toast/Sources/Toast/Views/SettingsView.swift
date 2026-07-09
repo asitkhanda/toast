@@ -13,6 +13,7 @@ struct SettingsView: View {
     @State private var statusMessage: String?
     @State private var isSavingToken = false
     @State private var isLoadingSession = false
+    @State private var analyticsEnabled = AnalyticsService.shared.isEnabled
 
     var body: some View {
         @Bindable var store = store
@@ -158,6 +159,18 @@ struct SettingsView: View {
                 }
             }
 
+            Section("Privacy") {
+                Toggle("Help improve Toast", isOn: $analyticsEnabled)
+                    .onChange(of: analyticsEnabled) { _, enabled in
+                        AnalyticsService.shared.isEnabled = enabled
+                    }
+                Text("Send anonymous usage data and crash reports to help fix bugs and improve the app. We never collect your Vercel token, project names, or personal information.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Link("Privacy Policy", destination: URL(string: "https://toast.asit.space/privacy")!)
+                    .font(.caption)
+            }
+
             Section {
                 Text("The menu bar icon polls Vercel every 5 seconds while a deployment is building, otherwise every 60 seconds.")
                     .font(.caption)
@@ -232,6 +245,7 @@ struct SettingsView: View {
             selectedProjectIDs = Set(store.watchedProjects.map(\.projectId))
             statusMessage = "Token saved. Connected to \(store.connectedTeamName ?? "Vercel")."
         } catch {
+            AnalyticsService.shared.captureTokenFailed(error)
             statusMessage = error.localizedDescription
         }
     }

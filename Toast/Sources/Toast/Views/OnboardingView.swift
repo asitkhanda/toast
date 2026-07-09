@@ -249,8 +249,26 @@ struct OnboardingView: View {
                     .foregroundStyle(.secondary)
             }
 
+            analyticsDisclosure
+
             feedbackBanner
         }
+    }
+
+    private var analyticsDisclosure: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Help improve Toast")
+                .font(.subheadline.weight(.semibold))
+            Text("Toast sends anonymous usage data and crash reports to help fix bugs and improve the app. We never collect your Vercel token, project names, or personal information. You can turn this off anytime in Settings.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            Link("Privacy Policy", destination: URL(string: "https://toast.asit.space/privacy")!)
+                .font(.caption)
+        }
+        .padding(10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.quaternary.opacity(0.35), in: RoundedRectangle(cornerRadius: 8))
     }
 
     @ViewBuilder
@@ -377,6 +395,7 @@ struct OnboardingView: View {
             successMessage = "Connected successfully."
             scopeWarningMessage = store.tokenScopeWarning
         } catch {
+            AnalyticsService.shared.captureTokenFailed(error)
             errorMessage = error.localizedDescription
         }
     }
