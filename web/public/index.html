@@ -161,7 +161,28 @@
                 line-height: 1.15;
                 letter-spacing: -0.01em;
                 max-width: 52rem;
+                margin: 0 auto 1.5rem;
+            }
+
+            .brew-install {
                 margin: 0 auto 2.5rem;
+                padding: 0;
+                max-width: 28rem;
+                font-family:
+                    ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+                    monospace;
+                font-size: 0.875rem;
+                line-height: 1.6;
+                text-align: left;
+                color: var(--text);
+                background: transparent;
+                border: 0;
+                overflow-x: auto;
+            }
+
+            .brew-install code {
+                display: block;
+                white-space: pre;
             }
 
             .hero-visual {
@@ -393,6 +414,9 @@
                     A lightweight MacOS menu bar app to check your vercel
                     deployments
                 </h1>
+                <pre class="brew-install"><code>brew tap asitkhanda/toast-tap
+brew trust asitkhanda/toast-tap
+brew install --cask toast-app</code></pre>
                 <div class="hero-visual">
                     <img
                         src="hero_image.png"
