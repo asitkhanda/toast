@@ -17,6 +17,15 @@ A macOS menu bar app that shows live Vercel deployment status for your watched p
 
 The DMG includes a **How to Open Toast.txt** guide with the same steps. Automatic updates are delivered via [Sparkle](https://sparkle-project.org/) after the first install.
 
+### Homebrew
+
+```bash
+brew tap asitkhanda/toast-tap
+brew install --cask toast-app
+```
+
+The cask is named `toast-app` to avoid a naming conflict with another Homebrew formula. Toast updates automatically via Sparkle after install — Homebrew is only needed for the initial install or to reinstall.
+
 ## Build locally
 
 ```bash
@@ -36,6 +45,8 @@ Requires macOS 14+ and Xcode command-line tools.
 ├── web/                   # Static site + /download redirect (Vercel)
 │   ├── api/download.ts    # Edge function → latest .dmg on GitHub Releases
 │   └── public/            # Landing page + appcast feed
+├── toast-tap/             # Homebrew tap (push to github.com/asitkhanda/toast-tap)
+│   └── Casks/toast-app.rb
 └── .github/workflows/     # Release automation
 ```
 
@@ -103,9 +114,36 @@ The [Release workflow](.github/workflows/release.yml) will:
 - Sign the zip with Sparkle EdDSA
 - Create a GitHub Release with both assets
 - Update `web/public/appcast.xml` and push to `main`
+- Bump the Homebrew cask in [asitkhanda/toast-tap](https://github.com/asitkhanda/toast-tap)
 - Trigger a Vercel redeploy of the appcast feed
 
 Installed apps check `https://toast.asit.space/appcast.xml` automatically and via **Check for Updates…** in Settings.
+
+### Homebrew tap setup (one-time)
+
+Push the `toast-tap/` directory to a public GitHub repo named `toast-tap`:
+
+```bash
+cd toast-tap
+git init
+git add .
+git commit -m "Add toast-app cask"
+git branch -M main
+git remote add origin git@github.com:asitkhanda/toast-tap.git
+git push -u origin main
+```
+
+The Release workflow bumps `Casks/toast-app.rb` automatically. If the tap repo is private or under a different account, add a `HOMEBREW_TAP_TOKEN` secret with push access.
+
+## Analytics
+
+Toast includes optional anonymous product analytics (“Help improve Toast” in Settings; on by default). When enabled, the app sends usage and diagnostic data to [PostHog](https://posthog.com) to help improve stability and understand feature usage.
+
+**What may be collected:** app version, macOS version, device architecture, anonymous feature usage (e.g. onboarding completed, settings toggles), API error types and HTTP status codes, crash stack traces, and optional feedback text if you use Send Feedback.
+
+**What is not collected:** your Vercel token, team IDs, project names, deployment URLs, or personal identifiers.
+
+You can disable analytics at any time in **Settings → Privacy → Help improve Toast**. See the [privacy policy](https://toast.asit.space/privacy) for details.
 
 ## Security
 

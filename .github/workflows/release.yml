@@ -111,6 +111,37 @@ jobs:
             Toast/dist/${{ steps.version.outputs.zip_name }}
             Toast/dist/SHA256SUMS.txt
 
+      - name: Bump Homebrew cask
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          DMG_NAME: ${{ steps.version.outputs.dmg_name }}
+          TAP_REPO: asitkhanda/toast-tap
+          GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN || secrets.GITHUB_TOKEN }}
+        run: |
+          DMG_SHA=$(awk -v dmg="$DMG_NAME" '$2 == dmg { print $1; exit }' Toast/dist/SHA256SUMS.txt)
+          if [ -z "$DMG_SHA" ]; then
+            echo "Could not find SHA256 for $DMG_NAME in SHA256SUMS.txt"
+            exit 1
+          fi
+          if ! git clone --depth 1 "https://x-access-token:${GH_TOKEN}@github.com/${TAP_REPO}.git" /tmp/toast-tap 2>/dev/null; then
+            echo "Skipping Homebrew cask bump — could not clone ${TAP_REPO}"
+            echo "Create the tap repo and add HOMEBREW_TAP_TOKEN if needed."
+            exit 0
+          fi
+          cd /tmp/toast-tap
+          cp "$GITHUB_WORKSPACE/scripts/bump-homebrew-cask.sh" /tmp/bump-homebrew-cask.sh
+          chmod +x /tmp/bump-homebrew-cask.sh
+          /tmp/bump-homebrew-cask.sh "$VERSION" "$DMG_SHA" Casks/toast-app.rb
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Casks/toast-app.rb
+          if git diff --staged --quiet; then
+            echo "No cask changes to commit"
+            exit 0
+          fi
+          git commit -m "Bump toast-app to ${VERSION}"
+          git push origin HEAD
+
       - name: Update appcast
         env:
           VERSION: ${{ steps.version.outputs.version }}
