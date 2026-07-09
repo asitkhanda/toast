@@ -82,5 +82,28 @@
         type="application/octet-stream"
         sparkle:edSignature="F89HQr5gATB+OfxgQPlQ9rQD9RxgvdWrRkCxg5Tqlw/hzj25kLGiJ2Vvujlf52biaEwQT/QSj6GJ1IPEaFNWCA=="/>
     </item>
+    <item>
+      <title>Version 0.4.0</title>
+      <description><![CDATA[
+<h2>What's New in 0.4.0</h2>
+<p><strong>Anonymous analytics (opt-out)</strong></p>
+<p>Toast now sends anonymous usage data and crash reports to help fix bugs and improve the app. This is enabled by default.</p>
+<ul>
+  <li>We never collect your Vercel token, project names, or personal information</li>
+  <li>Turn off anytime in <strong>Settings → Privacy → Help improve Toast</strong></li>
+  <li>Send feedback from the menu bar</li>
+  <li>Automatic crash reports with a one-tap prompt after unexpected quits</li>
+</ul>
+<p><a href="https://toast.asit.space/privacy">Privacy Policy</a></p>
+      ]]></description>
+      <sparkle:version>10</sparkle:version>
+      <sparkle:shortVersionString>0.4.0</sparkle:shortVersionString>
+      <pubDate>Thu, 09 Jul 2026 19:28:01 +0000</pubDate>
+      <enclosure
+        url="https://github.com/asitkhanda/toast/releases/download/v0.4.0/Toast-0.4.0.zip"
+        length="5069805"
+        type="application/octet-stream"
+        sparkle:edSignature="UWn1XmiDM3dGv30yVOmLt3vONnSYki+0Q4me0Li/zMT1ykGBaDzyxW03U1nErB3qh34/P02QCIE0moNY2sAcDA=="/>
+    </item>
 </channel>
 </rss>
