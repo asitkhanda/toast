@@ -164,16 +164,76 @@
                 margin: 0 auto 1.5rem;
             }
 
-            .brew-install {
+            .brew-card {
                 margin: 0 auto 2.5rem;
-                padding: 0;
-                max-width: 28rem;
+                max-width: 26rem;
+                text-align: left;
+                border-radius: 0.875rem;
+                background: #fff8e6;
+                border: 1px solid rgba(10, 10, 10, 0.08);
+                overflow: hidden;
+                box-shadow: 0 1px 2px rgba(10, 10, 10, 0.04);
+            }
+
+            .brew-card-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 0.75rem;
+                padding: 0.625rem 0.875rem;
+                border-bottom: 1px solid rgba(10, 10, 10, 0.06);
+                background: rgba(255, 255, 255, 0.45);
+            }
+
+            .brew-card-title {
+                font-size: 0.8125rem;
+                font-weight: 600;
+                letter-spacing: -0.01em;
+                color: var(--text);
+            }
+
+            .brew-copy-btn {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.35rem;
+                padding: 0.3rem 0.55rem;
+                border: 1px solid rgba(10, 10, 10, 0.1);
+                border-radius: 0.45rem;
+                background: #ffffff;
+                color: var(--muted);
+                font-family: inherit;
+                font-size: 0.75rem;
+                font-weight: 500;
+                cursor: pointer;
+                transition:
+                    color 0.15s ease,
+                    border-color 0.15s ease,
+                    background 0.15s ease;
+            }
+
+            .brew-copy-btn:hover {
+                color: var(--text);
+                border-color: rgba(10, 10, 10, 0.16);
+            }
+
+            .brew-copy-btn .ph {
+                font-size: 0.875rem;
+            }
+
+            .brew-copy-btn.is-copied {
+                color: #166534;
+                border-color: rgba(22, 101, 52, 0.2);
+                background: #f0fdf4;
+            }
+
+            .brew-install {
+                margin: 0;
+                padding: 0.875rem 1rem;
                 font-family:
                     ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
                     monospace;
-                font-size: 0.875rem;
-                line-height: 1.6;
-                text-align: left;
+                font-size: 0.8125rem;
+                line-height: 1.65;
                 color: var(--text);
                 background: transparent;
                 border: 0;
@@ -414,9 +474,23 @@
                     A lightweight MacOS menu bar app to check your vercel
                     deployments
                 </h1>
-                <pre class="brew-install"><code>brew tap asitkhanda/toast-tap
+                <div class="brew-card">
+                    <div class="brew-card-header">
+                        <span class="brew-card-title">Install with Homebrew</span>
+                        <button
+                            type="button"
+                            class="brew-copy-btn"
+                            id="brew-copy-btn"
+                            aria-label="Copy Homebrew install commands"
+                        >
+                            <i class="ph ph-copy" aria-hidden="true"></i>
+                            <span>Copy</span>
+                        </button>
+                    </div>
+                    <pre class="brew-install"><code id="brew-install-commands">brew tap asitkhanda/toast-tap
 brew trust asitkhanda/toast-tap
 brew install --cask toast-app</code></pre>
+                </div>
                 <div class="hero-visual">
                     <img
                         src="hero_image.png"
@@ -508,5 +582,65 @@ brew install --cask toast-app</code></pre>
                 <a href="/terms">Terms of Service</a>
             </div>
         </footer>
+        <script>
+            (function () {
+                var btn = document.getElementById("brew-copy-btn");
+                var code = document.getElementById("brew-install-commands");
+                if (!btn || !code) return;
+
+                var label = btn.querySelector("span");
+                var icon = btn.querySelector(".ph");
+                var resetTimer;
+
+                btn.addEventListener("click", function () {
+                    var text = code.textContent.trim();
+                    if (!text) return;
+
+                    function showCopied() {
+                        clearTimeout(resetTimer);
+                        btn.classList.add("is-copied");
+                        if (label) label.textContent = "Copied!";
+                        if (icon) {
+                            icon.classList.remove("ph-copy");
+                            icon.classList.add("ph-check");
+                        }
+                        resetTimer = setTimeout(function () {
+                            btn.classList.remove("is-copied");
+                            if (label) label.textContent = "Copy";
+                            if (icon) {
+                                icon.classList.remove("ph-check");
+                                icon.classList.add("ph-copy");
+                            }
+                        }, 2000);
+                    }
+
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                        navigator.clipboard
+                            .writeText(text)
+                            .then(showCopied)
+                            .catch(function () {
+                                fallbackCopy(text);
+                                showCopied();
+                            });
+                        return;
+                    }
+
+                    fallbackCopy(text);
+                    showCopied();
+                });
+
+                function fallbackCopy(text) {
+                    var area = document.createElement("textarea");
+                    area.value = text;
+                    area.setAttribute("readonly", "");
+                    area.style.position = "fixed";
+                    area.style.left = "-9999px";
+                    document.body.appendChild(area);
+                    area.select();
+                    document.execCommand("copy");
+                    document.body.removeChild(area);
+                }
+            })();
+        </script>
     </body>
 </html>
