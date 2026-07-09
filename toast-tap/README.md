@@ -1,12 +1,19 @@
 # homebrew-toast-tap
 
-Homebrew tap for [Toast](https://toast.asit.space) — a macOS menu bar app for live Vercel deployment status.
+Homebrew tap for [Toast](https://toast.asit.space) — a menu bar app (no Dock icon) to check your Vercel deployments live.
 
 ## Install
 
 ```bash
 brew tap asitkhanda/toast-tap
+brew trust asitkhanda/toast-tap
 brew install --cask toast-app
+```
+
+Homebrew cannot run custom steps after `brew tap`, but it will refuse to install from an untrusted tap until you run `brew trust`. If you skip the trust step, `brew install` will tell you what to run. To trust only this cask instead of the whole tap:
+
+```bash
+brew trust --cask asitkhanda/toast-tap/toast-app
 ```
 
 Toast updates automatically via Sparkle after install. Homebrew is only needed for the initial install or to reinstall.

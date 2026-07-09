@@ -21,8 +21,11 @@ The DMG includes a **How to Open Toast.txt** guide with the same steps. Automati
 
 ```bash
 brew tap asitkhanda/toast-tap
+brew trust asitkhanda/toast-tap
 brew install --cask toast-app
 ```
+
+Homebrew requires third-party taps to be explicitly trusted before install. If you skip `brew trust`, the install step will prompt you to run it. To trust only this cask: `brew trust --cask asitkhanda/toast-tap/toast-app`.
 
 The cask is named `toast-app` to avoid a naming conflict with another Homebrew formula. Toast updates automatically via Sparkle after install — Homebrew is only needed for the initial install or to reinstall.
 
