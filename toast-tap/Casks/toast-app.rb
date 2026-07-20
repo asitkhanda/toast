@@ -15,8 +15,9 @@ cask "toast-app" do
   auto_updates true
 
   caveats <<~EOS
-    Toast is ad-hoc signed (not notarized). On first launch you may need to
-    right-click Toast in Applications → Open → Open.
+    Toast is Developer ID signed and notarized. Double-click to open after
+    copying to Applications. If macOS still warns on an older download,
+    right-click Toast in Applications → Open → Open once.
   EOS
 
   zap trash: [

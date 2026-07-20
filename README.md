@@ -9,11 +9,8 @@ A macOS menu bar app that shows live Vercel deployment status for your watched p
 ## Install
 
 1. Download from [toast.asit.space/download](https://toast.asit.space/download) (redirects to the latest `.dmg`).
-2. Open the DMG and drag **Toast** into **Applications** (checkpoint 1 — also shown on the DMG background).
-3. **Allow first launch** (checkpoint 2 — Toast is not notarized yet):
-   - **Recommended:** in Applications, right-click **Toast** → **Open** → **Open**.
-   - **Fallback:** double-click once (expect the warning), then **System Settings → Privacy & Security → Open Anyway**.
-4. Complete onboarding with a **read-only, team-scoped** [Vercel personal access token](https://vercel.com/account/tokens), then pick projects to watch (checkpoint 3).
+2. Open the DMG and drag **Toast** into **Applications**.
+3. Double-click **Toast** in Applications and complete onboarding with a **read-only, team-scoped** [Vercel personal access token](https://vercel.com/account/tokens), then pick projects to watch.
 
 The DMG includes a **How to Open Toast.txt** guide with the same steps. Automatic updates are delivered via [Sparkle](https://sparkle-project.org/) after the first install.
 
@@ -112,7 +109,7 @@ Optional: set **`GITHUB_REPO`** (e.g. `owner/repo`) if the repo slug differs fro
 
 The [Release workflow](.github/workflows/release.yml) will:
 
-- Build and ad-hoc sign the app
+- Build, Developer ID sign, and notarize the app and DMG
 - Create a DMG for manual install and a zip for Sparkle updates
 - Sign the zip with Sparkle EdDSA
 - Create a GitHub Release with both assets
@@ -168,13 +165,51 @@ You can disable analytics at any time in **Settings → Privacy → Help improve
 - Keep `SPARKLE_PRIVATE_KEY` in GitHub Actions secrets only — delete the local export after setup (`Toast/scripts/setup-sparkle-keys.sh --purge-local`).
 - Enable branch protection on `main`: require PR reviews, block force pushes, and restrict who can push tags or run the Release workflow.
 
-### Code signing
+### Code signing & notarization
 
-This project currently uses **ad-hoc signing** without notarization. Users may see Gatekeeper warnings on first install and occasionally after updates.
+Releases are **Developer ID signed** and **Apple-notarized** so macOS opens Toast without Gatekeeper workarounds.
 
-`com.apple.security.cs.disable-library-validation` is required so the ad-hoc-signed app can load the embedded Sparkle.framework (signed by a different identity). Remove it only when the app and all embedded frameworks share the same Developer ID signature.
+#### One-time Apple setup
 
-When you join the Apple Developer Program, switch to Developer ID signing + notarization for stronger install/update trust.
+1. In [Certificates, Identifiers & Profiles](https://developer.apple.com/account/resources/certificates/list), create a **Developer ID Application** certificate.
+2. Export it from Keychain Access as a `.p12` file (remember the export password).
+3. In [App Store Connect → Users and Access → Integrations → App Store Connect API](https://appstoreconnect.apple.com/access/integrations/api), create an API key with **Developer** access. Download the `.p8` file.
+
+#### GitHub Actions secrets
+
+Add these in **Settings → Secrets and variables → Actions**:
+
+| Secret | Value |
+|--------|--------|
+| `APPLE_CERTIFICATE_P12` | Base64-encoded `.p12` (`base64 -i cert.p12 \| pbcopy`) |
+| `APPLE_CERTIFICATE_PASSWORD` | Password used when exporting the `.p12` |
+| `APPLE_API_KEY_ID` | App Store Connect API key ID |
+| `APPLE_API_ISSUER_ID` | App Store Connect issuer ID |
+| `APPLE_API_KEY` | Full contents of the `.p8` API key file |
+
+Optional fallback (if you prefer app-specific password instead of API key):
+
+| Secret | Value |
+|--------|--------|
+| `APPLE_ID` | Apple ID email |
+| `APPLE_NOTARIZATION_PASSWORD` | App-specific password |
+| `APPLE_TEAM_ID` | 10-character team ID |
+
+Optional: `APPLE_SIGN_IDENTITY` — only needed if auto-detection fails (e.g. `Developer ID Application: Your Name (TEAMID)`).
+
+#### Local signed build
+
+```bash
+cd Toast
+export SIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)"
+export NOTARIZE=1
+export APPLE_API_KEY_PATH="$HOME/path/AuthKey_XXXXXX.p8"
+export APPLE_API_KEY_ID="..."
+export APPLE_API_ISSUER_ID="..."
+./build.sh
+```
+
+Without `SIGN_IDENTITY`, `./build.sh` still produces an ad-hoc build for local development (uses `Toast.adhoc.entitlements` so Sparkle can load).
 
 CI builds are **arm64** (Apple Silicon). macOS 14+ is required.
 

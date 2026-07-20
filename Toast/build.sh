@@ -10,6 +10,7 @@ LAUNCHER_BUNDLE_ID="com.toast.app.launcher"
 BUILD_DIR="$ROOT/.build/release"
 APP_DIR="$ROOT/dist/$APP_NAME.app"
 ENTITLEMENTS="$ROOT/Resources/Toast.entitlements"
+ADHOC_ENTITLEMENTS="$ROOT/Resources/Toast.adhoc.entitlements"
 INFO_PLIST="$ROOT/Resources/Info.plist"
 LAUNCHER_INFO_PLIST="$ROOT/Resources/ToastLauncher-Info.plist"
 ICON_SOURCE="$ROOT/Resources/toast.icon"
@@ -98,10 +99,30 @@ install_name_tool \
     -add_rpath "@executable_path/../Frameworks" \
     "$APP_DIR/Contents/MacOS/$EXECUTABLE_NAME" 2>/dev/null || true
 
-echo "Signing (ad-hoc)..."
-codesign --force --deep --sign - "$APP_DIR/Contents/Frameworks/Sparkle.framework"
-codesign --force --sign - --options runtime "$LAUNCHER_APP_DIR"
-codesign --force --deep --sign - --entitlements "$ENTITLEMENTS" --options runtime "$APP_DIR"
+chmod +x "$ROOT/scripts/codesign-app.sh"
+if [[ -n "${SIGN_IDENTITY:-}" ]]; then
+    echo "Signing (Developer ID)..."
+    "$ROOT/scripts/codesign-app.sh" "$APP_DIR" "$SIGN_IDENTITY" "$ENTITLEMENTS"
+else
+    echo "Signing (ad-hoc — set SIGN_IDENTITY for Developer ID builds)..."
+    codesign --force --deep --sign - "$APP_DIR/Contents/Frameworks/Sparkle.framework"
+    codesign --force --sign - --options runtime "$LAUNCHER_APP_DIR"
+    codesign --force --deep --sign - --entitlements "$ADHOC_ENTITLEMENTS" --options runtime "$APP_DIR"
+fi
+
+if [[ "${NOTARIZE:-}" == "1" ]]; then
+    if [[ -z "${SIGN_IDENTITY:-}" ]]; then
+        echo "Error: NOTARIZE=1 requires SIGN_IDENTITY."
+        exit 1
+    fi
+    chmod +x "$ROOT/scripts/notarize.sh"
+    "$ROOT/scripts/notarize.sh" "$APP_DIR"
+fi
+
+echo "Refreshing DMG backgrounds..."
+swift "$ROOT/scripts/generate-dmg-background.swift" \
+    "$ROOT/Resources/dmg-background.png" \
+    "$ROOT/Resources/dmg-background@2x.png"
 
 echo "Creating $ZIP_NAME..."
 rm -f "$ZIP_PATH"
@@ -111,6 +132,10 @@ echo "Creating $DMG_NAME..."
 # Styled installer DMG with Gatekeeper checkpoints (falls back to plain DMG in CI).
 chmod +x "$ROOT/scripts/package-dmg.sh"
 "$ROOT/scripts/package-dmg.sh" "$APP_DIR" "$DMG_PATH"
+
+if [[ "${NOTARIZE:-}" == "1" ]]; then
+    "$ROOT/scripts/notarize.sh" "$DMG_PATH"
+fi
 
 echo "Built: $APP_DIR"
 echo "Install: $DMG_PATH"

@@ -104,7 +104,7 @@ func render(width: Int, height: Int) -> NSBitmapImageRep {
         in: NSRect(x: px(30), y: CGFloat(height) - px(58), width: px(400), height: px(34))
     )
     drawText(
-        "Three quick steps · not notarized yet",
+        "Three quick steps · signed & notarized",
         font: font(13, .medium),
         color: muted,
         in: NSRect(x: px(30), y: CGFloat(height) - px(82), width: px(400), height: px(18))
@@ -177,7 +177,7 @@ func render(width: Int, height: Int) -> NSBitmapImageRep {
         in: NSRect(x: leftCard.minX + px(40), y: leftCard.maxY - px(34), width: px(230), height: px(18))
     )
     drawText(
-        "In Applications, right-click Toast → Open → Open. Clears Gatekeeper in one step on most Macs.",
+        "In Applications, double-click Toast to open. Notarized builds open without Gatekeeper workarounds.",
         font: font(11, .regular),
         color: muted,
         in: NSRect(x: leftCard.minX + px(16), y: leftCard.minY + px(14), width: cardW - px(32), height: px(56))

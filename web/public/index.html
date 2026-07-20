@@ -505,9 +505,9 @@ brew install --cask toast-app</code></pre>
                 <div class="install-header">
                     <h2 id="install-heading">Install in three steps</h2>
                     <p>
-                        Toast is not Apple-notarized yet, so macOS may warn on
-                        first launch. Follow these checkpoints — they are also
-                        printed on the DMG.
+                        Toast is Developer ID signed and Apple-notarized, so
+                        macOS should open it normally after you copy it to
+                        Applications.
                     </p>
                 </div>
                 <div class="checkpoints">
@@ -527,18 +527,14 @@ brew install --cask toast-app</code></pre>
                         <span class="checkpoint-number" aria-hidden="true"
                             >2</span
                         >
-                        <h3>Allow Toast to open</h3>
+                        <h3>Open Toast</h3>
                         <p>
-                            In Applications,
-                            <strong>right-click Toast → Open → Open</strong>.
-                            That clears Gatekeeper in one step on most Macs.
+                            In Applications, <strong>double-click Toast</strong>.
+                            Notarized builds open without Gatekeeper workarounds.
                         </p>
                         <p class="alt">
-                            Fallback: double-click once (expect a warning), then
-                            <strong
-                                >System Settings → Privacy &amp; Security →
-                                Open Anyway</strong
-                            >.
+                            Fallback on older downloads:
+                            <strong>right-click Toast → Open → Open</strong> once.
                         </p>
                     </article>
                     <article class="checkpoint">
