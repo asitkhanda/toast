@@ -53,7 +53,9 @@ struct MenuBarLabel: View {
             }
         }
         .task {
-            updater.startIfNeeded()
+            if updater.supportsManualUpdates {
+                updater.startIfNeeded()
+            }
             store.bootstrap()
         }
     }

@@ -2,9 +2,10 @@
 # Sign Toast.app and embedded helpers with a Developer ID (or other) identity.
 set -euo pipefail
 
-APP_DIR="${1:?Usage: codesign-app.sh <Toast.app> <signing-identity> [entitlements.plist]}"
-SIGN_IDENTITY="${2:?Usage: codesign-app.sh <Toast.app> <signing-identity> [entitlements.plist]}"
+APP_DIR="${1:?Usage: codesign-app.sh <Toast.app> <signing-identity> [entitlements.plist] [launcher-entitlements.plist]}"
+SIGN_IDENTITY="${2:?Usage: codesign-app.sh <Toast.app> <signing-identity> [entitlements.plist] [launcher-entitlements.plist]}"
 ENTITLEMENTS="${3:-}"
+LAUNCHER_ENTITLEMENTS="${4:-}"
 
 if [[ ! -d "$APP_DIR" ]]; then
     echo "Error: app bundle not found at $APP_DIR"
@@ -18,7 +19,7 @@ sign() {
         return 0
     fi
     echo "  codesign: ${target#$APP_DIR/}"
-  codesign --force --options runtime --timestamp --sign "$SIGN_IDENTITY" "$@" "$target"
+    codesign --force --options runtime --timestamp --sign "$SIGN_IDENTITY" "$@" "$target"
 }
 
 echo "Signing with identity: $SIGN_IDENTITY"
@@ -32,7 +33,13 @@ if [[ -d "$SPARKLE_FW" ]]; then
 fi
 
 LAUNCHER_APP="$APP_DIR/Contents/Library/LoginItems/ToastLauncher.app"
-sign "$LAUNCHER_APP"
+if [[ -d "$LAUNCHER_APP" ]]; then
+    if [[ -n "$LAUNCHER_ENTITLEMENTS" ]]; then
+        sign "$LAUNCHER_APP" --entitlements "$LAUNCHER_ENTITLEMENTS"
+    else
+        sign "$LAUNCHER_APP"
+    fi
+fi
 
 MAIN_EXECUTABLE="$APP_DIR/Contents/MacOS/Toast"
 if [[ -f "$MAIN_EXECUTABLE" ]]; then

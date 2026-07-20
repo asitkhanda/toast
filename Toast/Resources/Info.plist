@@ -34,5 +34,7 @@
 	<string>/NJC3Hywm9QCBdL/t+IJefLM4M/keWe60DleHdHk6vU=</string>
 	<key>PostHogAPIKey</key>
 	<string>phc_xUXi7iy4qdDctgCcH3fPZfSiBBve2tG7bBKcWCwmieK9</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 </dict>
 </plist>

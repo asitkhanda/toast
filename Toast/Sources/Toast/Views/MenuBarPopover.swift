@@ -189,8 +189,10 @@ struct MenuBarPopover: View {
             Button("Settings…") {
                 AppActivation.openSettings(openSettings)
             }
-            Button("Check for Updates…") {
-                updater.checkForUpdates()
+            if updater.supportsManualUpdates {
+                Button("Check for Updates…") {
+                    updater.checkForUpdates()
+                }
             }
             Button("Send Feedback…") {
                 showFeedbackSheet = true

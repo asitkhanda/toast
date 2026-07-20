@@ -154,8 +154,14 @@ struct SettingsView: View {
                     Text("\(updater.currentVersion) (\(updater.currentBuild))")
                         .foregroundStyle(.secondary)
                 }
-                Button("Check for Updates…") {
-                    updater.checkForUpdates()
+                if updater.supportsManualUpdates {
+                    Button("Check for Updates…") {
+                        updater.checkForUpdates()
+                    }
+                } else {
+                    Text("Updates are delivered by the Mac App Store.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
             }
 

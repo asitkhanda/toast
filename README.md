@@ -213,6 +213,21 @@ Without `SIGN_IDENTITY`, `./build.sh` still produces an ad-hoc build for local d
 
 CI builds are **arm64** (Apple Silicon). macOS 14+ is required.
 
+## Mac App Store (separate build)
+
+Toast can also be built for the Mac App Store alongside direct download. See **[Toast/MAC_APP_STORE.md](Toast/MAC_APP_STORE.md)** for the full checklist.
+
+Quick start:
+
+```bash
+cd Toast
+export SIGN_IDENTITY="Apple Distribution: Your Name (TEAMID)"
+export PROVISIONING_PROFILE_PATH="$HOME/Downloads/Toast_Mac_App_Store.provisionprofile"
+./build-mas.sh
+```
+
+The MAS build is sandboxed, excludes Sparkle, and outputs to `dist/mas/Toast.app`.
+
 ## Development
 
 Open in Xcode:

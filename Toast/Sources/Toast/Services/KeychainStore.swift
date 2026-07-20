@@ -32,7 +32,9 @@ enum KeychainStore {
         addQuery[kSecValueData as String] = data
         addQuery[kSecAttrAccessible as String] = kSecAttrAccessibleWhenUnlockedThisDeviceOnly
         addQuery[kSecAttrSynchronizable as String] = kCFBooleanFalse as Any
+        #if !APPSTORE
         addQuery[kSecAttrAccess as String] = try makeAccess()
+        #endif
 
         let status = SecItemAdd(addQuery as CFDictionary, nil)
         guard status == errSecSuccess else {
@@ -81,6 +83,9 @@ enum KeychainStore {
     }
 
     private static func makeAccess() throws -> SecAccess {
+        #if APPSTORE
+        throw KeychainError.accessFailed(errSecUnimplemented)
+        #else
         var trustedApp: SecTrustedApplication?
         let trustedStatus = SecTrustedApplicationCreateFromPath(nil, &trustedApp)
         guard trustedStatus == errSecSuccess, let trustedApp else {
@@ -97,6 +102,7 @@ enum KeychainStore {
             throw KeychainError.accessFailed(accessStatus)
         }
         return access
+        #endif
     }
 }
 

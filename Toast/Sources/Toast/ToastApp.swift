@@ -54,7 +54,11 @@ struct ToastApp: App {
             SettingsView()
                 .environment(store)
                 .environment(updater)
-                .task { updater.startIfNeeded() }
+                .task {
+                    if updater.supportsManualUpdates {
+                        updater.startIfNeeded()
+                    }
+                }
         }
         .windowResizability(.contentSize)
     }
