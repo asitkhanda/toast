@@ -121,8 +121,45 @@
                 opacity: 0.7;
             }
 
-            .download-btn {
+            .nav-actions {
                 justify-self: end;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+            }
+
+            .github-btn {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 2.625rem;
+                height: 2.625rem;
+                border-radius: 9999px;
+                border: 1px solid rgba(10, 10, 10, 0.12);
+                color: var(--text);
+                text-decoration: none;
+                transition:
+                    border-color 0.15s ease,
+                    background 0.15s ease;
+            }
+
+            .github-btn:hover {
+                border-color: rgba(10, 10, 10, 0.2);
+                background: rgba(10, 10, 10, 0.03);
+            }
+
+            .github-btn .ph {
+                font-size: 1.25rem;
+            }
+
+            .download-wrap {
+                display: flex;
+                flex-direction: column;
+                align-items: flex-end;
+                gap: 0.125rem;
+            }
+
+            .download-btn {
                 display: inline-flex;
                 align-items: center;
                 gap: 0.5rem;
@@ -143,6 +180,14 @@
 
             .download-btn .ph {
                 font-size: 1rem;
+            }
+
+            .download-stat {
+                margin: 0;
+                font-size: 0.6875rem;
+                line-height: 1.2;
+                color: var(--muted);
+                white-space: nowrap;
             }
 
             main {
@@ -426,7 +471,7 @@
                     grid-row: 1;
                 }
 
-                .download-btn {
+                .nav-actions {
                     grid-column: 2;
                     grid-row: 1;
                 }
@@ -462,10 +507,29 @@
                 <span>Toast</span>
             </a>
             <a class="nav-contact" href="mailto:asit@hey.com">Contact Me</a>
-            <a class="download-btn" href="/download">
-                Download
-                <i class="ph ph-arrow-up-right" aria-hidden="true"></i>
-            </a>
+            <div class="nav-actions">
+                <a
+                    class="github-btn"
+                    href="https://github.com/asitkhanda/toast"
+                    aria-label="View source on GitHub"
+                    rel="noopener noreferrer"
+                    target="_blank"
+                >
+                    <i class="ph ph-github-logo" aria-hidden="true"></i>
+                </a>
+                <div class="download-wrap">
+                    <a class="download-btn" href="/download">
+                        Download
+                        <i class="ph ph-arrow-up-right" aria-hidden="true"></i>
+                    </a>
+                    <p
+                        class="download-stat"
+                        id="download-stat"
+                        aria-live="polite"
+                        hidden
+                    ></p>
+                </div>
+            </div>
         </header>
 
         <main>
@@ -579,6 +643,34 @@ brew install --cask toast-app</code></pre>
             </div>
         </footer>
         <script>
+            (function () {
+                var stat = document.getElementById("download-stat");
+                if (stat) {
+                    fetch("/api/stats")
+                        .then(function (response) {
+                            if (!response.ok) {
+                                throw new Error("stats unavailable");
+                            }
+                            return response.json();
+                        })
+                        .then(function (data) {
+                            var total = data && data.totalDownloads;
+                            if (typeof total !== "number" || total <= 0) {
+                                return;
+                            }
+
+                            var formatted = new Intl.NumberFormat("en-US").format(
+                                total,
+                            );
+                            stat.textContent = formatted + " downloads";
+                            stat.hidden = false;
+                        })
+                        .catch(function () {
+                            stat.hidden = true;
+                        });
+                }
+            })();
+
             (function () {
                 var btn = document.getElementById("brew-copy-btn");
                 var code = document.getElementById("brew-install-commands");
