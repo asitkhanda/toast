@@ -28,27 +28,39 @@ if ([string]::IsNullOrWhiteSpace($Version)) {
 
 Write-Host "Building Toast for Windows v$Version ($Configuration)"
 
-$props = @(
-    "/p:Configuration=$Configuration",
-    "/p:Platform=x64",
-    "/p:Version=$Version",
-    "/p:ToastVersion=$Version",
-    "/p:RuntimeIdentifier=win-x64",
-    "/p:SelfContained=true",
-    "/p:WindowsAppSDKSelfContained=true",
-    "/p:PublishSingleFile=false"
+# RID win-x64 is enough; do not pass Platform=x64 — that redirects output to bin/x64/...
+# and breaks the publishDir path below.
+$commonProps = @(
+    "-p:Version=$Version",
+    "-p:ToastVersion=$Version",
+    "-p:WindowsAppSDKSelfContained=true",
+    "-p:PublishSingleFile=false"
 )
 
 dotnet restore Toast.sln
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-dotnet publish "src/Toast/Toast.csproj" -c $Configuration -r win-x64 --self-contained true @props
+dotnet publish "src/Toast/Toast.csproj" `
+    -c $Configuration `
+    -r win-x64 `
+    --self-contained true `
+    @commonProps
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-$publishDir = Join-Path $Root "src/Toast/bin/$Configuration/net8.0-windows10.0.19041.0/win-x64/publish"
-if (-not (Test-Path $publishDir)) {
-    throw "Publish output not found: $publishDir"
+$publishCandidates = @(
+    (Join-Path $Root "src/Toast/bin/$Configuration/net8.0-windows10.0.19041.0/win-x64/publish"),
+    (Join-Path $Root "src/Toast/bin/x64/$Configuration/net8.0-windows10.0.19041.0/win-x64/publish")
+)
+$publishDir = $publishCandidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+if (-not $publishDir) {
+    Write-Host "Publish output not found. Searched:"
+    $publishCandidates | ForEach-Object { Write-Host "  $_" }
+    Get-ChildItem -Path (Join-Path $Root "src/Toast/bin") -Recurse -Filter "Toast.exe" -ErrorAction SilentlyContinue |
+        ForEach-Object { Write-Host "  found exe: $($_.FullName)" }
+    throw "Publish output not found for Toast.exe"
 }
+
+Write-Host "Publish dir: $publishDir"
 
 # Ensure watchdog is in publish output
 dotnet publish "src/Toast.Watchdog/Toast.Watchdog.csproj" -c $Configuration -r win-x64 --self-contained false -o $publishDir
@@ -77,9 +89,26 @@ if ($Sign -and $env:WINDOWS_CERTIFICATE_P12 -and $env:WINDOWS_CERTIFICATE_PASSWO
 
 if (-not $SkipPack) {
     Write-Host "Packaging with Velopack..."
-    dotnet tool update -g vpk 2>$null
+    $toolsDir = Join-Path $env:USERPROFILE ".dotnet\tools"
+    if ($env:PATH -notlike "*$toolsDir*") {
+        $env:PATH = "$toolsDir;$env:PATH"
+    }
+
+    dotnet tool update -g vpk
     if ($LASTEXITCODE -ne 0) {
         dotnet tool install -g vpk
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+    }
+
+    $vpk = Get-Command vpk -ErrorAction SilentlyContinue
+    if (-not $vpk) {
+        $vpkExe = Join-Path $toolsDir "vpk.exe"
+        if (-not (Test-Path $vpkExe)) {
+            throw "vpk tool not found after install (looked for $vpkExe)"
+        }
+        $vpkCmd = $vpkExe
+    } else {
+        $vpkCmd = "vpk"
     }
 
     $packArgs = @(
@@ -93,7 +122,7 @@ if (-not $SkipPack) {
         "--channel", "win"
     )
 
-    & vpk @packArgs
+    & $vpkCmd @packArgs
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
     # Normalize Setup.exe name for GitHub Releases / download API

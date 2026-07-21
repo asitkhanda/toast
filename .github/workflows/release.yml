@@ -230,21 +230,34 @@ jobs:
         with:
           dotnet-version: "8.0.x"
 
+      - name: Add .NET global tools to PATH
+        shell: pwsh
+        run: |
+          echo "$env:USERPROFILE\.dotnet\tools" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
       - name: Build Windows package
         shell: pwsh
         env:
           WINDOWS_CERTIFICATE_P12: ${{ secrets.WINDOWS_CERTIFICATE_P12 }}
           WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
         run: |
+          $ErrorActionPreference = "Stop"
           $sign = $false
           if ($env:WINDOWS_CERTIFICATE_P12 -and $env:WINDOWS_CERTIFICATE_PASSWORD) {
             $sign = $true
           }
           if ($sign) {
-            ./toast-win/build.ps1 -Version "${{ needs.version.outputs.version }}" -Sign
+            & "$env:GITHUB_WORKSPACE/toast-win/build.ps1" -Version "${{ needs.version.outputs.version }}" -Sign
           } else {
             Write-Host "WINDOWS_CERTIFICATE_* secrets not set — building unsigned Windows package."
-            ./toast-win/build.ps1 -Version "${{ needs.version.outputs.version }}"
+            & "$env:GITHUB_WORKSPACE/toast-win/build.ps1" -Version "${{ needs.version.outputs.version }}"
+          }
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $setup = Join-Path $env:GITHUB_WORKSPACE "toast-win/dist/${{ needs.version.outputs.win_setup_name }}"
+          if (-not (Test-Path $setup)) {
+            Write-Host "Expected setup missing: $setup"
+            Get-ChildItem (Join-Path $env:GITHUB_WORKSPACE "toast-win/dist") -ErrorAction SilentlyContinue | Format-Table Name,Length
+            exit 1
           }
 
       - name: Upload Windows artifacts
