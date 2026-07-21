@@ -68,8 +68,10 @@ jobs:
           fi
 
       - name: Build app
+        timeout-minutes: 20
         env:
           NOTARIZE: "1"
+          NOTARIZE_TIMEOUT: "15m"
           APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
           APPLE_API_ISSUER_ID: ${{ secrets.APPLE_API_ISSUER_ID }}
           APPLE_ID: ${{ secrets.APPLE_ID }}
