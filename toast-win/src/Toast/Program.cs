@@ -16,7 +16,7 @@ public static class Program
             var context = new Microsoft.UI.Dispatching.DispatcherQueueSynchronizationContext(
                 Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread());
             SynchronizationContext.SetSynchronizationContext(context);
-            _ = new App();
+            new App();
         });
     }
 }
