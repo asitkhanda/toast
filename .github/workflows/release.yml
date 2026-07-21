@@ -219,7 +219,9 @@ jobs:
 
   release-win:
     needs: version
-    runs-on: windows-latest
+    # windows-latest is VS 2026 / Server 2025 and drops the Windows 10 SDK
+    # needed for net8.0-windows10.0.19041.0 WinUI XamlCompiler builds.
+    runs-on: windows-2022
     continue-on-error: true
     steps:
       - name: Checkout
