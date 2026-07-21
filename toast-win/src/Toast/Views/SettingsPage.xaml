@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="Toast.Views.SettingsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <ScrollViewer Padding="20">
+        <StackPanel Spacing="16" MaxWidth="360">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="Settings" Style="{StaticResource TitleTextBlockStyle}" />
+                <Button Grid.Column="1" Content="Back" Click="Back_Click" />
+            </Grid>
+
+            <TextBlock Text="Connection" Style="{StaticResource SubtitleTextBlockStyle}" />
+            <TextBlock x:Name="ConnectionStatus" TextWrapping="WrapWholeWords" />
+            <PasswordBox x:Name="TokenBox" PlaceholderText="Replace Vercel token" />
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <Button Content="Save token" Style="{StaticResource AccentButtonStyle}" Click="SaveToken_Click" />
+                <Button Content="Disconnect" Click="Disconnect_Click" />
+            </StackPanel>
+            <TextBlock x:Name="ErrorText" Foreground="{ThemeResource SystemFillColorCriticalBrush}" TextWrapping="WrapWholeWords" Visibility="Collapsed" />
+            <TextBlock x:Name="ScopeWarning" Foreground="{ThemeResource SystemFillColorCautionBrush}" TextWrapping="WrapWholeWords" Visibility="Collapsed" />
+
+            <TextBlock Text="Watched projects" Style="{StaticResource SubtitleTextBlockStyle}" />
+            <ListView x:Name="ProjectList" SelectionMode="Multiple" MaxHeight="200" />
+            <Button Content="Save projects" Click="SaveProjects_Click" />
+
+            <TextBlock Text="Menu bar / tray" Style="{StaticResource SubtitleTextBlockStyle}" />
+            <ToggleSwitch x:Name="ShowStatusTextToggle" Header="Show status text" Toggled="Pref_Toggled" />
+            <ToggleSwitch x:Name="NotificationsToggle" Header="Desktop notifications" Toggled="Pref_Toggled" />
+
+            <TextBlock Text="Background" Style="{StaticResource SubtitleTextBlockStyle}" />
+            <ToggleSwitch x:Name="LaunchAtLoginToggle" Header="Launch at login" Toggled="Pref_Toggled" />
+            <ToggleSwitch x:Name="RunInBackgroundToggle" Header="Keep running in tray" Toggled="Pref_Toggled" />
+            <ToggleSwitch x:Name="RelaunchOnCrashToggle" Header="Relaunch after crash" Toggled="Pref_Toggled" />
+
+            <TextBlock Text="Privacy" Style="{StaticResource SubtitleTextBlockStyle}" />
+            <ToggleSwitch x:Name="AnalyticsToggle" Header="Share anonymous analytics" Toggled="Analytics_Toggled" />
+
+            <TextBlock Text="Updates" Style="{StaticResource SubtitleTextBlockStyle}" />
+            <Button x:Name="UpdateButton" Content="Check for updates" Click="Update_Click" />
+        </StackPanel>
+    </ScrollViewer>
+</Page>

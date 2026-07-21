@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="Toast.Views.AnalyticsNoticePage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <StackPanel Padding="24" Spacing="12" MaxWidth="360">
+        <TextBlock Text="Anonymous analytics" Style="{StaticResource SubtitleTextBlockStyle}" TextWrapping="WrapWholeWords" />
+        <TextBlock Text="Toast collects anonymous product analytics to improve reliability. Tokens and project names are never included. You can turn this off in Settings."
+                   TextWrapping="WrapWholeWords"
+                   Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+        <Button Content="Got it" Style="{StaticResource AccentButtonStyle}" Click="Continue_Click" HorizontalAlignment="Stretch" />
+    </StackPanel>
+</Page>

@@ -58,6 +58,7 @@ export async function fetchAllReleases(): Promise<GitHubRelease[]> {
 export function summarizeReleaseDownloads(releases: GitHubRelease[]) {
   let dmgDownloads = 0;
   let zipDownloads = 0;
+  let windowsDownloads = 0;
 
   for (const release of releases) {
     for (const asset of release.assets) {
@@ -65,14 +66,20 @@ export function summarizeReleaseDownloads(releases: GitHubRelease[]) {
         dmgDownloads += asset.download_count;
       } else if (asset.name.endsWith(".zip")) {
         zipDownloads += asset.download_count;
+      } else if (
+        asset.name.endsWith("-win-x64-Setup.exe") ||
+        /win.*Setup\.exe$/i.test(asset.name)
+      ) {
+        windowsDownloads += asset.download_count;
       }
     }
   }
 
   return {
-    totalDownloads: dmgDownloads + zipDownloads,
+    totalDownloads: dmgDownloads + zipDownloads + windowsDownloads,
     dmgDownloads,
     zipDownloads,
+    windowsDownloads,
     releaseCount: releases.length,
   };
 }

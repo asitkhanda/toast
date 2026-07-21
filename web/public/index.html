@@ -19,14 +19,14 @@
         />
         <meta
             name="description"
-            content="A lightweight MacOS menu bar application to check your vercel deployments"
+            content="A lightweight menu bar and system tray app to check your Vercel deployments"
         />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://toast.asit.space/" />
         <meta property="og:title" content="Toast" />
         <meta
             property="og:description"
-            content="A lightweight MacOS menu bar application to check your vercel deployments"
+            content="A lightweight menu bar and system tray app to check your Vercel deployments"
         />
         <meta
             property="og:image"
@@ -34,13 +34,13 @@
         />
         <meta
             property="og:image:alt"
-            content="Toast — a macOS menu bar app for Vercel deployment status"
+            content="Toast — menu bar / system tray for Vercel deployment status"
         />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Toast" />
         <meta
             name="twitter:description"
-            content="A lightweight MacOS menu bar application to check your vercel deployments"
+            content="A lightweight menu bar and system tray app to check your Vercel deployments"
         />
         <meta
             name="twitter:image"
@@ -196,6 +196,102 @@
 
             .download-btn .ph {
                 font-size: 1rem;
+            }
+
+            .download-split {
+                display: inline-flex;
+                align-items: stretch;
+                border-radius: 9999px;
+                background: var(--orange);
+                overflow: visible;
+                position: relative;
+            }
+
+            .download-split-main {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.5rem;
+                padding: 0.625rem 0.875rem 0.625rem 1.125rem;
+                color: #ffffff;
+                text-decoration: none;
+                font-size: 0.9375rem;
+                font-weight: 500;
+                white-space: nowrap;
+                border-radius: 9999px 0 0 9999px;
+                transition: background 0.15s ease;
+            }
+
+            .download-split-main:hover {
+                background: #c95a01;
+            }
+
+            .download-split-icons {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.35rem;
+            }
+
+            .download-split-icons .ph {
+                font-size: 1.05rem;
+                line-height: 1;
+            }
+
+            .download-split-toggle {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                padding: 0 0.7rem;
+                color: #ffffff;
+                background: transparent;
+                border: none;
+                border-left: 1px solid rgba(255, 255, 255, 0.28);
+                border-radius: 0 9999px 9999px 0;
+                cursor: pointer;
+                transition: background 0.15s ease;
+            }
+
+            .download-split-toggle:hover,
+            .download-split-toggle[aria-expanded="true"] {
+                background: #c95a01;
+            }
+
+            .download-split-menu {
+                display: none;
+                position: absolute;
+                top: calc(100% + 0.4rem);
+                right: 0;
+                min-width: 12.5rem;
+                padding: 0.35rem;
+                border-radius: 0.75rem;
+                background: #ffffff;
+                border: 1px solid rgba(10, 10, 10, 0.1);
+                box-shadow: 0 10px 30px rgba(10, 10, 10, 0.12);
+                z-index: 40;
+            }
+
+            .download-split-menu.open {
+                display: block;
+            }
+
+            .download-split-menu a {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                padding: 0.55rem 0.7rem;
+                border-radius: 0.5rem;
+                text-decoration: none;
+                color: var(--text);
+                font-size: 0.875rem;
+                font-weight: 500;
+            }
+
+            .download-split-menu a:hover {
+                background: rgba(10, 10, 10, 0.06);
+            }
+
+            .download-split-menu .ph {
+                font-size: 1rem;
+                color: var(--muted);
             }
 
             main {
@@ -531,18 +627,59 @@
                         aria-live="polite"
                     ></span>
                 </a>
-                <a class="download-btn" href="/download">
-                    Download
-                    <i class="ph ph-arrow-up-right" aria-hidden="true"></i>
-                </a>
+                <div class="download-split" id="download-split">
+                    <a
+                        class="download-split-main"
+                        href="/download"
+                        aria-label="Download Toast for your platform"
+                    >
+                        Download
+                        <span class="download-split-icons" aria-hidden="true">
+                            <i class="ph ph-apple-logo"></i>
+                            <i class="ph ph-windows-logo"></i>
+                        </span>
+                    </a>
+                    <button
+                        type="button"
+                        class="download-split-toggle"
+                        id="download-menu-toggle"
+                        aria-label="Choose download platform"
+                        aria-haspopup="menu"
+                        aria-expanded="false"
+                        aria-controls="download-menu"
+                    >
+                        <i class="ph ph-caret-down" aria-hidden="true"></i>
+                    </button>
+                    <div
+                        class="download-split-menu"
+                        id="download-menu"
+                        role="menu"
+                        hidden
+                    >
+                        <a
+                            href="/download?platform=mac"
+                            role="menuitem"
+                        >
+                            <i class="ph ph-apple-logo" aria-hidden="true"></i>
+                            Download for macOS
+                        </a>
+                        <a
+                            href="/download?platform=windows"
+                            role="menuitem"
+                        >
+                            <i class="ph ph-windows-logo" aria-hidden="true"></i>
+                            Download for Windows
+                        </a>
+                    </div>
+                </div>
             </div>
         </header>
 
         <main>
             <section class="hero">
                 <h1>
-                    A lightweight MacOS menu bar app to check your vercel
-                    deployments
+                    A lightweight menu bar &amp; system tray app to check your
+                    Vercel deployments
                 </h1>
                 <div class="brew-card">
                     <div class="brew-card-header">
@@ -575,9 +712,9 @@ brew install --cask toast-app</code></pre>
                 <div class="install-header">
                     <h2 id="install-heading">Install in three steps</h2>
                     <p>
-                        Toast is Developer ID signed and Apple-notarized, so
-                        macOS should open it normally after you copy it to
-                        Applications.
+                        <strong>macOS:</strong> Developer ID signed and Apple-notarized DMG.
+                        <strong>Windows:</strong> run the Setup.exe from the same release
+                        (Velopack installer). Both keep your Vercel token in the OS secret store.
                     </p>
                 </div>
                 <div class="checkpoints">
@@ -585,12 +722,11 @@ brew install --cask toast-app</code></pre>
                         <span class="checkpoint-number" aria-hidden="true"
                             >1</span
                         >
-                        <h3>Copy to Applications</h3>
+                        <h3>Get Toast</h3>
                         <p>
-                            Open the downloaded DMG and drag
-                            <strong>Toast</strong> into
-                            <strong>Applications</strong>. Don’t open it from
-                            the DMG itself.
+                            Use <strong>Download</strong> above (or pick macOS / Windows).
+                            On Mac, open the DMG and drag <strong>Toast</strong> into
+                            <strong>Applications</strong>. On Windows, run the Setup.exe.
                         </p>
                     </article>
                     <article class="checkpoint">
@@ -599,12 +735,11 @@ brew install --cask toast-app</code></pre>
                         >
                         <h3>Open Toast</h3>
                         <p>
-                            In Applications, <strong>double-click Toast</strong>.
-                            Notarized builds open without Gatekeeper workarounds.
+                            Launch Toast from Applications (Mac) or the Start menu (Windows).
+                            It lives in the menu bar / system tray.
                         </p>
                         <p class="alt">
-                            Fallback on older downloads:
-                            <strong>right-click Toast → Open → Open</strong> once.
+                            Older Mac downloads: <strong>right-click Toast → Open → Open</strong> once.
                         </p>
                     </article>
                     <article class="checkpoint">
@@ -616,13 +751,13 @@ brew install --cask toast-app</code></pre>
                             Paste a
                             <strong>read-only, team-scoped</strong> Vercel
                             token, pick projects to watch, and optionally enable
-                            notifications and Launch at Login.
+                            notifications and launch at login.
                         </p>
                     </article>
                 </div>
                 <p class="install-note">
-                    Need the steps again later? Open
-                    <strong>How to Open Toast.txt</strong> on the DMG.
+                    macOS tip: <strong>How to Open Toast.txt</strong> is on the DMG.
+                    Prefer Homebrew? Use the install card above.
                 </p>
             </section>
         </main>
@@ -739,6 +874,37 @@ brew install --cask toast-app</code></pre>
                     document.execCommand("copy");
                     document.body.removeChild(area);
                 }
+            })();
+
+            (function () {
+                var root = document.getElementById("download-split");
+                var toggle = document.getElementById("download-menu-toggle");
+                var menu = document.getElementById("download-menu");
+                if (!root || !toggle || !menu) return;
+
+                function setOpen(open) {
+                    menu.classList.toggle("open", open);
+                    menu.hidden = !open;
+                    toggle.setAttribute("aria-expanded", open ? "true" : "false");
+                }
+
+                toggle.addEventListener("click", function (event) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    setOpen(!menu.classList.contains("open"));
+                });
+
+                document.addEventListener("click", function (event) {
+                    if (!root.contains(event.target)) {
+                        setOpen(false);
+                    }
+                });
+
+                document.addEventListener("keydown", function (event) {
+                    if (event.key === "Escape") {
+                        setOpen(false);
+                    }
+                });
             })();
         </script>
     </body>

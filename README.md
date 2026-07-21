@@ -1,20 +1,46 @@
 # Toast
 
-A macOS menu bar app that shows live Vercel deployment status for your watched projects.
+A lightweight **menu bar (macOS)** and **system tray (Windows)** app for live Vercel deployment status.
 
-- **Download:** [toast.asit.space/download](https://toast.asit.space/download)
-- **Update feed:** [toast.asit.space/appcast.xml](https://toast.asit.space/appcast.xml)
+| Platform | Install | Auto-update |
+|----------|---------|-------------|
+| **macOS** | [DMG](https://toast.asit.space/download?platform=mac) or Homebrew | Sparkle |
+| **Windows** | [Setup.exe](https://toast.asit.space/download?platform=windows) | Velopack |
+
 - **Landing page:** [toast.asit.space](https://toast.asit.space)
+- **macOS update feed:** [toast.asit.space/appcast.xml](https://toast.asit.space/appcast.xml)
+- **Source:** macOS in [`Toast/`](Toast/), Windows in [`toast-win/`](toast-win/) (same product version)
 
 ## Install
 
-1. Download from [toast.asit.space/download](https://toast.asit.space/download) (redirects to the latest `.dmg`).
+### macOS
+
+1. Download from [toast.asit.space/download?platform=mac](https://toast.asit.space/download?platform=mac) (latest `.dmg`).
 2. Open the DMG and drag **Toast** into **Applications**.
 3. Double-click **Toast** in Applications and complete onboarding with a **read-only, team-scoped** [Vercel personal access token](https://vercel.com/account/tokens), then pick projects to watch.
 
 The DMG includes a **How to Open Toast.txt** guide with the same steps. Automatic updates are delivered via [Sparkle](https://sparkle-project.org/) after the first install.
 
-### Homebrew
+### Windows
+
+1. Download from [toast.asit.space/download?platform=windows](https://toast.asit.space/download?platform=windows) (`Toast-{version}-win-x64-Setup.exe` on the GitHub Release).
+2. Run the installer and launch **Toast** from the Start menu (lives in the system tray).
+3. Complete the same onboarding with a read-only Vercel token.
+
+Windows updates use [Velopack](https://velopack.io/). Until an Authenticode cert is configured, builds may be unsigned — verify `SHA256SUMS.txt` on the [GitHub release](https://github.com/asitkhanda/toast/releases) before installing.
+
+**Try from source on Windows** (no installer yet / local build):
+
+```powershell
+git clone https://github.com/asitkhanda/toast.git
+cd toast\toast-win
+./build.ps1
+# Installer: dist\Toast-0.4.1-win-x64-Setup.exe
+```
+
+Requires Windows x64 + [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0). Details: [toast-win/README.md](toast-win/README.md).
+
+### Homebrew (macOS)
 
 ```bash
 brew tap asitkhanda/toast-tap
@@ -28,6 +54,8 @@ The cask is named `toast-app` to avoid a naming conflict with another Homebrew f
 
 ## Build locally
 
+### macOS
+
 ```bash
 cd Toast
 ./build.sh
@@ -36,18 +64,31 @@ open "dist/Toast.app"
 
 Requires macOS 14+ and Xcode command-line tools.
 
+### Windows
+
+```powershell
+cd toast-win
+./build.ps1
+```
+
+See [toast-win/README.md](toast-win/README.md). Requires Windows + .NET 8 SDK.
+
 ## Repository layout
 
 ```
 ├── Toast/                 # macOS app (Swift + Sparkle)
 │   ├── Resources/         # Info.plist, icon, DMG background + open guide
 │   └── scripts/           # DMG background generator + installer packaging
+├── toast-win/             # Windows app (WinUI 3 + Velopack)
+│   ├── src/Toast.Core/    # Shared product logic (API, poll store)
+│   ├── src/Toast/         # WinUI tray UI
+│   └── build.ps1          # Publish + Velopack pack
 ├── web/                   # Static site + /download redirect (Vercel)
-│   ├── api/download.ts    # Edge function → latest .dmg on GitHub Releases
+│   ├── api/download.ts    # Edge function → latest .dmg or Windows Setup.exe
 │   └── public/            # Landing page + appcast feed
 ├── toast-tap/             # Homebrew tap (push to github.com/asitkhanda/homebrew-toast-tap)
 │   └── Casks/toast-app.rb
-└── .github/workflows/     # Release automation
+└── .github/workflows/     # Release automation (mac + windows + publish)
 ```
 
 ## Sparkle signing keys (one-time setup)
@@ -90,13 +131,13 @@ Never commit the private key. The file is listed in `.gitignore`.
 4. Deploy (static site plus one Edge Function — no build command required).
 5. Add custom domain **`toast.asit.space`** in Vercel → Domains.
 6. In your DNS provider for `asit.space`, add the CNAME record Vercel shows (typically `toast` → `cname.vercel-dns.com`).
-7. Verify [https://toast.asit.space/](https://toast.asit.space/) shows the landing page, [https://toast.asit.space/download](https://toast.asit.space/download) redirects to the latest DMG, and [https://toast.asit.space/appcast.xml](https://toast.asit.space/appcast.xml) returns XML over HTTPS.
+7. Verify [https://toast.asit.space/](https://toast.asit.space/) shows the landing page, [https://toast.asit.space/download?platform=mac](https://toast.asit.space/download?platform=mac) redirects to the latest DMG, [https://toast.asit.space/download?platform=windows](https://toast.asit.space/download?platform=windows) resolves to the Windows Setup.exe when published, and [https://toast.asit.space/appcast.xml](https://toast.asit.space/appcast.xml) returns XML over HTTPS.
 
 Optional: set **`GITHUB_REPO`** (e.g. `owner/repo`) if the repo slug differs from `asitkhanda/toast`.
 
 ## Releasing a new version
 
-1. Bump version in `Toast/Resources/Info.plist`:
+1. Bump version in `Toast/Resources/Info.plist` (source of truth for both platforms):
    - `CFBundleShortVersionString` — semver (e.g. `0.2.0`)
    - `CFBundleVersion` — increment build number (e.g. `2`)
 2. Commit and push to `main`.
@@ -107,17 +148,15 @@ Optional: set **`GITHUB_REPO`** (e.g. `owner/repo`) if the repo slug differs fro
    git push origin v0.2.0
    ```
 
+Optional Windows signing secrets: `WINDOWS_CERTIFICATE_P12` (base64), `WINDOWS_CERTIFICATE_PASSWORD`.
+
 The [Release workflow](.github/workflows/release.yml) will:
 
-- Build, Developer ID sign, and notarize the app and DMG
-- Create a DMG for manual install and a zip for Sparkle updates
-- Sign the zip with Sparkle EdDSA
-- Create a GitHub Release with both assets
-- Update `web/public/appcast.xml` and push to `main`
-- Bump the Homebrew cask in [asitkhanda/homebrew-toast-tap](https://github.com/asitkhanda/homebrew-toast-tap)
-- Trigger a Vercel redeploy of the appcast feed
+- **Mac:** Build, Developer ID sign, and notarize the app and DMG; create a Sparkle zip; sign with Sparkle EdDSA; bump Homebrew; update `appcast.xml`
+- **Windows:** Build WinUI app + Velopack `Toast-{version}-win-x64-Setup.exe` (optional Authenticode if secrets are set). Windows failures do **not** block the Mac release.
+- **Publish:** Create a GitHub Release with Mac assets always, Windows Setup.exe when present, and a combined `SHA256SUMS.txt`
 
-Installed apps check `https://toast.asit.space/appcast.xml` automatically and via **Check for Updates…** in Settings.
+Installed macOS apps check `https://toast.asit.space/appcast.xml` automatically and via **Check for Updates…** in Settings. Windows apps update via Velopack from GitHub Releases.
 
 ### Homebrew tap setup (one-time)
 
@@ -139,7 +178,7 @@ The Release workflow bumps `Casks/toast-app.rb` automatically. If the tap repo i
 
 Toast includes optional anonymous product analytics (“Help improve Toast” in Settings; on by default). When enabled, the app sends usage and diagnostic data to [PostHog](https://posthog.com) to help improve stability and understand feature usage.
 
-**What may be collected:** app version, macOS version, device architecture, anonymous feature usage (e.g. onboarding completed, settings toggles), API error types and HTTP status codes, crash stack traces, and optional feedback text if you use Send Feedback.
+**What may be collected:** app version, OS version, device architecture, anonymous feature usage (e.g. onboarding completed, settings toggles), API error types and HTTP status codes, crash stack traces, and optional feedback text if you use Send Feedback.
 
 **What is not collected:** your Vercel token, team IDs, project names, deployment URLs, or personal identifiers.
 
@@ -149,15 +188,16 @@ You can disable analytics at any time in **Settings → Privacy → Help improve
 
 ### Vercel tokens
 
-- Tokens are stored in the macOS Keychain with app-scoped access control (`SecAccess` + `WhenUnlockedThisDeviceOnly`).
-- Tokens are loaded from Keychain only when needed for API calls — not kept in long-lived app state or pre-filled in Settings.
+- **macOS:** Tokens are stored in the Keychain with app-scoped access control (`SecAccess` + `WhenUnlockedThisDeviceOnly`).
+- **Windows:** Tokens are stored in Windows Credential Manager (`Toast/VercelPAT`, local-machine persist).
+- Tokens are loaded from the secret store only when needed for API calls — not kept in long-lived app state or pre-filled in Settings.
 - Use a **read-only, team-scoped** Vercel personal access token. Toast warns if a token appears to have elevated account access (e.g. can list account tokens).
 - Never commit tokens, `.env` files, or `Toast/sparkle-private-key`.
 
 ### Release integrity
 
-- Each GitHub Release includes `SHA256SUMS.txt` for the DMG and Sparkle zip.
-- Verify downloads before opening: `shasum -a 256 Toast-*.dmg` and compare with the release manifest.
+- Each GitHub Release includes `SHA256SUMS.txt` for the DMG, Sparkle zip, and Windows Setup.exe (when present).
+- Verify downloads before opening: `shasum -a 256 Toast-*.dmg` / `Toast-*-win-x64-Setup.exe` and compare with the release manifest.
 - Sparkle updates are EdDSA-signed; the public key is embedded in the app (`SUPublicEDKey` in `Info.plist`).
 
 ### GitHub & CI
@@ -196,6 +236,15 @@ Optional fallback (if you prefer app-specific password instead of API key):
 | `APPLE_TEAM_ID` | 10-character team ID |
 
 Optional: `APPLE_SIGN_IDENTITY` — only needed if auto-detection fails (e.g. `Developer ID Application: Your Name (TEAMID)`).
+
+#### Windows Authenticode (optional)
+
+| Secret | Value |
+|--------|--------|
+| `WINDOWS_CERTIFICATE_P12` | Base64-encoded code-signing `.p12` / `.pfx` |
+| `WINDOWS_CERTIFICATE_PASSWORD` | Password for that certificate |
+
+If unset, CI still publishes an **unsigned** `Toast-*-win-x64-Setup.exe`. Mac release never depends on these secrets.
 
 #### Local signed build
 

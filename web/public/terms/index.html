@@ -8,7 +8,7 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta
       name="description"
-      content="Terms and conditions for using Toast, a macOS menu bar app for Vercel deployment status."
+      content="Terms and conditions for using Toast, a menu bar / system tray app for Vercel deployment status."
     />
     <style>
       :root {
@@ -91,8 +91,8 @@
       <p class="updated">Last updated: June 28, 2026</p>
 
       <p>
-        These Terms &amp; Conditions (“Terms”) govern your use of <strong>Toast</strong>, the macOS
-        menu bar application and related website at
+        These Terms &amp; Conditions (“Terms”) govern your use of <strong>Toast</strong>, the
+        menu bar / system tray application for macOS and Windows and related website at
         <a href="https://toast.asit.space/">toast.asit.space</a>. By downloading, installing, or
         using Toast, you agree to these Terms.
       </p>
@@ -100,7 +100,7 @@
       <h2>About Toast</h2>
       <p>
         Toast is an independent developer tool that displays Vercel deployment status from your menu
-        bar. Toast is not affiliated with, endorsed by, or sponsored by Vercel Inc. “Vercel” is a
+        bar or system tray. Toast is not affiliated with, endorsed by, or sponsored by Vercel Inc. “Vercel” is a
         trademark of its respective owner.
       </p>
 
@@ -131,8 +131,9 @@
 
       <h2>Software updates</h2>
       <p>
-        Toast may check for updates automatically using Sparkle and the appcast feed hosted at
-        toast.asit.space. Updates are optional to install except where required for continued
+        On macOS, Toast may check for updates automatically using Sparkle and the appcast feed hosted at
+        toast.asit.space. On Windows, Toast may check for updates via Velopack against GitHub Releases.
+        Updates are optional to install except where required for continued
         compatibility with Vercel’s API.
       </p>
 
@@ -143,6 +144,14 @@
         need to right-click the app and choose <strong>Open</strong> once. The installer DMG and
         <a href="/#install">toast.asit.space/#install</a> document these steps. You download and run
         the software at your own discretion and risk.
+      </p>
+
+      <h2>Windows distribution</h2>
+      <p>
+        Toast for Windows is distributed as a Setup.exe installer (Velopack) from GitHub Releases.
+        When an Authenticode certificate is configured, builds are code-signed. Unsigned preview
+        builds may show SmartScreen warnings; verify the SHA-256 checksum from
+        <code>SHA256SUMS.txt</code> on the release page before installing.
       </p>
 
       <h2>Disclaimer of warranties</h2>

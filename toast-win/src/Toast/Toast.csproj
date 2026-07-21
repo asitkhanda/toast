@@ -1,0 +1,59 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <RootNamespace>Toast</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Platforms>x64</Platforms>
+    <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
+    <UseWinUI>true</UseWinUI>
+    <WindowsPackageType>None</WindowsPackageType>
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+    <EnableMsixTooling>false</EnableMsixTooling>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <ApplicationIcon>Assets\Toast.ico</ApplicationIcon>
+    <Version>$(ToastVersion)</Version>
+    <FileVersion>$(ToastVersion).$(ToastBuild)</FileVersion>
+    <AssemblyVersion>$(ToastVersion).$(ToastBuild)</AssemblyVersion>
+    <Product>Toast</Product>
+    <Company>Toast</Company>
+    <AssemblyTitle>Toast</AssemblyTitle>
+    <Description>System tray app for live Vercel deployment status</Description>
+    <DefineConstants>$(DefineConstants);DISABLE_XAML_GENERATED_MAIN</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.6.250205002" />
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.1742" />
+    <PackageReference Include="H.NotifyIcon.WinUI" Version="2.3.0" />
+    <PackageReference Include="Velopack" Version="0.0.1053" />
+    <PackageReference Include="Microsoft.Windows.CsWinRT" Version="2.2.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Toast.Core\Toast.Core.csproj" />
+  </ItemGroup>
+
+  <Target Name="CopyWatchdog" AfterTargets="Build">
+    <MSBuild Projects="..\Toast.Watchdog\Toast.Watchdog.csproj" Targets="Build" Properties="Configuration=$(Configuration)" />
+    <ItemGroup>
+      <_WatchdogFiles Include="..\Toast.Watchdog\bin\$(Configuration)\net8.0-windows\Toast.Watchdog*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(_WatchdogFiles)" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true" Condition="'@(_WatchdogFiles)' != ''" />
+  </Target>
+
+  <ItemGroup>
+    <Content Include="Assets\Toast.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Update="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <PropertyGroup Condition="'$(DisableMsixProjectCapabilityAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
+    <ProjectCapability Include="Msix" />
+  </PropertyGroup>
+</Project>

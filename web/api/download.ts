@@ -13,6 +13,8 @@ interface GitHubRelease {
   assets: ReleaseAsset[];
 }
 
+type Platform = "mac" | "windows";
+
 function parseChecksum(manifest: string, fileName: string): string | undefined {
   for (const line of manifest.split("\n")) {
     const trimmed = line.trim();
@@ -27,7 +29,39 @@ function parseChecksum(manifest: string, fileName: string): string | undefined {
   return undefined;
 }
 
-export default async function handler(): Promise<Response> {
+function resolvePlatform(request: Request): Platform {
+  const url = new URL(request.url);
+  const explicit = url.searchParams.get("platform")?.toLowerCase();
+  if (explicit === "mac" || explicit === "macos" || explicit === "darwin") {
+    return "mac";
+  }
+  if (explicit === "windows" || explicit === "win") {
+    return "windows";
+  }
+
+  const ua = request.headers.get("user-agent") ?? "";
+  if (/windows/i.test(ua)) {
+    return "windows";
+  }
+  return "mac";
+}
+
+function findAsset(
+  assets: ReleaseAsset[],
+  platform: Platform,
+): ReleaseAsset | undefined {
+  if (platform === "windows") {
+    return (
+      assets.find((asset) => asset.name.endsWith("-win-x64-Setup.exe")) ??
+      assets.find((asset) => /win.*Setup\.exe$/i.test(asset.name))
+    );
+  }
+  return assets.find((asset) => asset.name.endsWith(".dmg"));
+}
+
+export default async function handler(request: Request): Promise<Response> {
+  const preferred = resolvePlatform(request);
+
   const response = await fetch(
     `https://api.github.com/repos/${GITHUB_REPO}/releases/latest`,
     {
@@ -44,14 +78,18 @@ export default async function handler(): Promise<Response> {
   }
 
   const release = (await response.json()) as GitHubRelease;
-  const dmg = release.assets.find((asset) => asset.name.endsWith(".dmg"));
+  const fallback: Platform = preferred === "mac" ? "windows" : "mac";
+  const asset =
+    findAsset(release.assets, preferred) ?? findAsset(release.assets, fallback);
 
-  if (!dmg) {
-    return new Response("No DMG found for latest release.", { status: 404 });
+  if (!asset) {
+    return new Response("No download found for latest release.", {
+      status: 404,
+    });
   }
 
   const checksumsAsset = release.assets.find(
-    (asset) => asset.name === "SHA256SUMS.txt",
+    (candidate) => candidate.name === "SHA256SUMS.txt",
   );
 
   let checksum: string | undefined;
@@ -60,19 +98,20 @@ export default async function handler(): Promise<Response> {
       headers: { "User-Agent": "Toast-Download" },
     });
     if (checksumsResponse.ok) {
-      checksum = parseChecksum(await checksumsResponse.text(), dmg.name);
+      checksum = parseChecksum(await checksumsResponse.text(), asset.name);
     }
   }
 
   const headers: Record<string, string> = {
-    Location: dmg.browser_download_url,
+    Location: asset.browser_download_url,
     "Cache-Control": "public, max-age=300",
+    "X-Toast-Platform": asset.name.includes("win") ? "windows" : "mac",
   };
 
   if (checksum) {
     headers["X-Toast-SHA256"] = checksum;
     headers["X-Toast-Verify"] =
-      "Compare with SHA256SUMS.txt on the GitHub release before opening the DMG.";
+      "Compare with SHA256SUMS.txt on the GitHub release before installing.";
   }
 
   return new Response(null, {

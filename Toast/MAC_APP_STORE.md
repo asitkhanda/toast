@@ -2,6 +2,8 @@
 
 This document covers the **Mac App Store (MAS)** track for Toast. Direct download (DMG, Sparkle, Homebrew) stays on the existing `build.sh` path.
 
+**Windows** is a separate track (`toast-win/`, Velopack Setup.exe on the same GitHub Release). MAS entitlement/sandbox changes do not apply to Windows builds.
+
 ## Two distribution channels
 
 | | Direct download | Mac App Store |

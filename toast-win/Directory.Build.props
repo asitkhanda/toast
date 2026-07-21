@@ -1,0 +1,9 @@
+<Project>
+  <PropertyGroup>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <ToastVersion>0.4.1</ToastVersion>
+    <ToastBuild>11</ToastBuild>
+  </PropertyGroup>
+</Project>
