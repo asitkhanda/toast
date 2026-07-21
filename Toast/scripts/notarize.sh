@@ -176,7 +176,7 @@ poll_submission() {
 prepare_submit_path() {
     if [[ "$ARTIFACT" == *.app ]]; then
         SUBMIT_ZIP="$(mktemp -t toast-notarize).zip"
-        echo "Creating notarization archive for app..."
+        echo "Creating notarization archive for app..." >&2
         ditto -c -k --keepParent "$ARTIFACT" "$SUBMIT_ZIP"
         SUBMIT_PATH="$SUBMIT_ZIP"
     else
