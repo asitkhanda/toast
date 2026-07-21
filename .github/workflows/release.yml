@@ -145,6 +145,7 @@ jobs:
             Toast/dist/SHA256SUMS.txt
 
       - name: Bump Homebrew cask
+        continue-on-error: true
         env:
           VERSION: ${{ steps.version.outputs.version }}
           DMG_NAME: ${{ steps.version.outputs.dmg_name }}

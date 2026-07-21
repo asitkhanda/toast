@@ -105,5 +105,16 @@
         type="application/octet-stream"
         sparkle:edSignature="UWn1XmiDM3dGv30yVOmLt3vONnSYki+0Q4me0Li/zMT1ykGBaDzyxW03U1nErB3qh34/P02QCIE0moNY2sAcDA=="/>
     </item>
+    <item>
+      <title>Version 0.4.1</title>
+      <sparkle:version>11</sparkle:version>
+      <sparkle:shortVersionString>0.4.1</sparkle:shortVersionString>
+      <pubDate>Tue, 21 Jul 2026 14:30:44 +0000</pubDate>
+      <enclosure
+        url="https://github.com/asitkhanda/toast/releases/download/v0.4.1/Toast-0.4.1.zip"
+        length="5102387"
+        type="application/octet-stream"
+        sparkle:edSignature="scNk5jNwvzX5zUugkzDVHoB1COHjE3871bWn5o6K61WQGQ1bTQdLBSfHte2itXnP+dQi5I7LE+9PuyV1IvFlAw=="/>
+    </item>
 </channel>
 </rss>
