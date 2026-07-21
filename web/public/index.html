@@ -131,9 +131,9 @@
             .github-btn {
                 display: inline-flex;
                 align-items: center;
-                justify-content: center;
-                width: 2.625rem;
-                height: 2.625rem;
+                gap: 0.5rem;
+                min-height: 2.625rem;
+                padding: 0.5rem 0.875rem 0.5rem 0.75rem;
                 border-radius: 9999px;
                 border: 1px solid rgba(10, 10, 10, 0.12);
                 color: var(--text);
@@ -150,13 +150,29 @@
 
             .github-btn .ph {
                 font-size: 1.25rem;
+                line-height: 1;
             }
 
-            .download-wrap {
-                display: flex;
-                flex-direction: column;
-                align-items: flex-end;
-                gap: 0.125rem;
+            .github-stat {
+                display: none;
+                align-items: center;
+                gap: 0.5rem;
+                font-size: 0.8125rem;
+                font-weight: 500;
+                color: var(--muted);
+                white-space: nowrap;
+                line-height: 1;
+            }
+
+            .github-stat::before {
+                content: "";
+                width: 1px;
+                height: 0.875rem;
+                background: rgba(10, 10, 10, 0.14);
+            }
+
+            .github-btn.has-stat .github-stat {
+                display: inline-flex;
             }
 
             .download-btn {
@@ -180,14 +196,6 @@
 
             .download-btn .ph {
                 font-size: 1rem;
-            }
-
-            .download-stat {
-                margin: 0;
-                font-size: 0.6875rem;
-                line-height: 1.2;
-                color: var(--muted);
-                white-space: nowrap;
             }
 
             main {
@@ -510,25 +518,23 @@
             <div class="nav-actions">
                 <a
                     class="github-btn"
+                    id="github-btn"
                     href="https://github.com/asitkhanda/toast"
                     aria-label="View source on GitHub"
                     rel="noopener noreferrer"
                     target="_blank"
                 >
                     <i class="ph ph-github-logo" aria-hidden="true"></i>
-                </a>
-                <div class="download-wrap">
-                    <a class="download-btn" href="/download">
-                        Download
-                        <i class="ph ph-arrow-up-right" aria-hidden="true"></i>
-                    </a>
-                    <p
-                        class="download-stat"
+                    <span
+                        class="github-stat"
                         id="download-stat"
                         aria-live="polite"
-                        hidden
-                    ></p>
-                </div>
+                    ></span>
+                </a>
+                <a class="download-btn" href="/download">
+                    Download
+                    <i class="ph ph-arrow-up-right" aria-hidden="true"></i>
+                </a>
             </div>
         </header>
 
@@ -644,31 +650,36 @@ brew install --cask toast-app</code></pre>
         </footer>
         <script>
             (function () {
+                var btn = document.getElementById("github-btn");
                 var stat = document.getElementById("download-stat");
-                if (stat) {
-                    fetch("/api/stats")
-                        .then(function (response) {
-                            if (!response.ok) {
-                                throw new Error("stats unavailable");
-                            }
-                            return response.json();
-                        })
-                        .then(function (data) {
-                            var total = data && data.totalDownloads;
-                            if (typeof total !== "number" || total <= 0) {
-                                return;
-                            }
+                if (!btn || !stat) return;
 
-                            var formatted = new Intl.NumberFormat("en-US").format(
-                                total,
-                            );
-                            stat.textContent = formatted + " downloads";
-                            stat.hidden = false;
-                        })
-                        .catch(function () {
-                            stat.hidden = true;
-                        });
-                }
+                fetch("/api/stats")
+                    .then(function (response) {
+                        if (!response.ok) {
+                            throw new Error("stats unavailable");
+                        }
+                        return response.json();
+                    })
+                    .then(function (data) {
+                        var total = data && data.totalDownloads;
+                        if (typeof total !== "number" || total <= 0) {
+                            return;
+                        }
+
+                        var formatted = new Intl.NumberFormat("en-US").format(
+                            total,
+                        );
+                        stat.textContent = formatted;
+                        btn.classList.add("has-stat");
+                        btn.setAttribute(
+                            "aria-label",
+                            "View source on GitHub — " +
+                                formatted +
+                                " downloads",
+                        );
+                    })
+                    .catch(function () {});
             })();
 
             (function () {
