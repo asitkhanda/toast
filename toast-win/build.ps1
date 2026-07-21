@@ -70,8 +70,13 @@ if (-not $publishDir) {
 
 Write-Host "Publish dir: $publishDir"
 
-# Ensure watchdog is in publish output
-dotnet publish "src/Toast.Watchdog/Toast.Watchdog.csproj" -c $Configuration -r win-x64 --self-contained false -o $publishDir
+# Ensure watchdog is in publish output (framework-dependent; same RID as host publish).
+dotnet publish "src/Toast.Watchdog/Toast.Watchdog.csproj" `
+    -c $Configuration `
+    -r win-x64 `
+    --self-contained false `
+    -o $publishDir `
+    --no-self-contained
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
 $dist = Join-Path $Root "dist"

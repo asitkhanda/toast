@@ -38,9 +38,14 @@
   </ItemGroup>
 
   <Target Name="CopyWatchdog" AfterTargets="Build">
-    <MSBuild Projects="..\Toast.Watchdog\Toast.Watchdog.csproj" Targets="Build" Properties="Configuration=$(Configuration)" />
+    <MSBuild
+      Projects="..\Toast.Watchdog\Toast.Watchdog.csproj"
+      Targets="Build"
+      Properties="Configuration=$(Configuration);RuntimeIdentifier="
+      UndefineProperties="RuntimeIdentifier" />
     <ItemGroup>
       <_WatchdogFiles Include="..\Toast.Watchdog\bin\$(Configuration)\net8.0-windows\Toast.Watchdog*" />
+      <_WatchdogFiles Include="..\Toast.Watchdog\bin\$(Configuration)\net8.0-windows\win-x64\Toast.Watchdog*" />
     </ItemGroup>
     <Copy SourceFiles="@(_WatchdogFiles)" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true" Condition="'@(_WatchdogFiles)' != ''" />
   </Target>
