@@ -43,14 +43,14 @@ jobs:
         run: |
           echo "$env:USERPROFILE\.dotnet\tools" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
-      - name: Publish Toast (SkipPack)
+      - name: Build Windows Setup.exe
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
-          & "$env:GITHUB_WORKSPACE/toast-win/build.ps1" -SkipPack
+          & "$env:GITHUB_WORKSPACE/toast-win/build.ps1"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-      - name: Smoke-check publish output
+      - name: Smoke-check package output
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
@@ -70,12 +70,15 @@ jobs:
             throw "Toast.Watchdog.exe missing beside Toast.exe"
           }
           Write-Host "OK: $watchdog"
+          $setup = Get-ChildItem "$env:GITHUB_WORKSPACE/toast-win/dist" -Filter "*Setup.exe" |
+            Sort-Object LastWriteTime -Descending |
+            Select-Object -First 1
+          if (-not $setup) { throw "Setup.exe missing in toast-win/dist" }
+          Write-Host "OK: $($setup.FullName) ($($setup.Length) bytes)"
 
-      - name: Upload publish folder
+      - name: Upload Windows Setup.exe
         uses: actions/upload-artifact@v4
         with:
-          name: toast-win-publish
-          path: |
-            toast-win/src/Toast/bin/Release/net8.0-windows10.0.19041.0/win-x64/publish/**
-            toast-win/src/Toast/bin/x64/Release/net8.0-windows10.0.19041.0/win-x64/publish/**
+          name: toast-win-setup
+          path: toast-win/dist/*Setup.exe
           if-no-files-found: error
