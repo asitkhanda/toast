@@ -35,7 +35,7 @@ Windows updates use [Velopack](https://velopack.io/). Until an Authenticode cert
 git clone https://github.com/asitkhanda/toast.git
 cd toast\toast-win
 ./build.ps1
-# Installer: dist\Toast-0.4.1-win-x64-Setup.exe
+# Installer: dist\Toast-0.4.2-win-x64-Setup.exe
 ```
 
 Requires Windows x64 + [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0). Details: [toast-win/README.md](toast-win/README.md).

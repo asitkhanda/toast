@@ -3,32 +3,97 @@
     x:Class="Toast.Views.PopoverPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <Grid Padding="16">
+    <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        <StackPanel Spacing="4">
+
+        <!-- Header -->
+        <Border Padding="16,14" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="0,0,0,1">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-                <StackPanel>
-                    <TextBlock x:Name="HeaderTitle" Text="Toast" Style="{StaticResource SubtitleTextBlockStyle}" />
-                    <TextBlock x:Name="HeaderSubtitle" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="WrapWholeWords" />
+                <StackPanel Spacing="4">
+                    <TextBlock x:Name="HeaderTitle" Style="{StaticResource SubtitleTextBlockStyle}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" />
+                    <StackPanel x:Name="HeaderTimestamps" Spacing="2">
+                        <TextBlock
+                            x:Name="HeaderSubtitle"
+                            FontSize="11"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            TextWrapping="WrapWholeWords" />
+                    </StackPanel>
                 </StackPanel>
-                <Button Grid.Column="1" Content="Settings" Click="Settings_Click" />
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Top">
+                    <FontIcon
+                        x:Name="StatusIcon"
+                        FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                        FontSize="18"
+                        Glyph="&#xE73E;"
+                        Foreground="#34C759"
+                        Visibility="Collapsed" />
+                    <ProgressRing
+                        x:Name="LoadingRing"
+                        Width="18"
+                        Height="18"
+                        IsActive="False"
+                        Visibility="Collapsed" />
+                    <Button
+                        Click="Settings_Click"
+                        ToolTipService.ToolTip="Settings"
+                        Padding="8">
+                        <FontIcon FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="14" Glyph="&#xE713;" />
+                    </Button>
+                </StackPanel>
             </Grid>
-        </StackPanel>
+        </Border>
 
-        <ListView x:Name="StatusList" Grid.Row="1" Margin="0,12,0,12" SelectionMode="None" />
+        <!-- Content -->
+        <ScrollViewer Grid.Row="1" Padding="12,8">
+            <StackPanel x:Name="StatusList" Spacing="8" />
+        </ScrollViewer>
 
-        <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="8">
-            <Button Content="Refresh" Click="Refresh_Click" />
-            <Button Content="Feedback" Click="Feedback_Click" />
-            <Button x:Name="UpdateButton" Content="Check for updates" Click="Update_Click" Visibility="Collapsed" />
-        </StackPanel>
+        <TextBlock
+            x:Name="ErrorBanner"
+            Grid.Row="1"
+            VerticalAlignment="Bottom"
+            Margin="16,0,16,8"
+            FontSize="12"
+            Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+            TextWrapping="WrapWholeWords"
+            Visibility="Collapsed" />
+
+        <!-- Footer -->
+        <Border
+            Grid.Row="2"
+            Padding="12,10"
+            BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
+            BorderThickness="0,1,0,0"
+            Background="{ThemeResource LayerOnMicaBaseAltFillColorDefaultBrush}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                    <Button Content="Refresh" Style="{StaticResource SubtleButtonStyle}" Click="Refresh_Click" />
+                    <Button Content="Feedback" Style="{StaticResource SubtleButtonStyle}" Click="Feedback_Click" />
+                    <Button
+                        x:Name="UpdateButton"
+                        Content="Updates"
+                        Style="{StaticResource SubtleButtonStyle}"
+                        Click="Update_Click"
+                        Visibility="Collapsed" />
+                </StackPanel>
+                <Button
+                    Grid.Column="1"
+                    Content="Quit"
+                    Style="{StaticResource SubtleButtonStyle}"
+                    Click="Quit_Click" />
+            </Grid>
+        </Border>
     </Grid>
 </Page>

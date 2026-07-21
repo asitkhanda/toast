@@ -5,7 +5,8 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <StackPanel Padding="24" Spacing="12" MaxWidth="360">
         <TextBlock Text="Toast restarted after a crash" Style="{StaticResource SubtitleTextBlockStyle}" TextWrapping="WrapWholeWords" />
-        <TextBlock Text="A crash report was recorded anonymously if analytics are enabled." TextWrapping="WrapWholeWords"
+        <TextBlock Text="A crash report was recorded anonymously if analytics are enabled. Look for the Toast icon in the notification area (system tray) — click the ^ chevron if it is hidden."
+                   TextWrapping="WrapWholeWords"
                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
         <CheckBox x:Name="DontShowAgain" Content="Don't show this again" />
         <Button Content="Continue" Style="{StaticResource AccentButtonStyle}" Click="Continue_Click" HorizontalAlignment="Stretch" />

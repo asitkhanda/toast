@@ -48,5 +48,5 @@ public interface IBackgroundService
 public interface IUpdaterService
 {
     bool SupportsManualUpdates { get; }
-    Task CheckForUpdatesAsync();
+    Task<bool> CheckForUpdatesAsync();
 }

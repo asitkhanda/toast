@@ -9,8 +9,8 @@ public sealed class AppConfig
     public string PostHogApiKey { get; set; } = "";
     public string PostHogHost { get; set; } = "https://us.i.posthog.com";
     public string UpdateUrl { get; set; } = "https://github.com/asitkhanda/toast";
-    public string AppVersion { get; set; } = "0.4.1";
-    public string AppBuild { get; set; } = "11";
+    public string AppVersion { get; set; } = "0.4.2";
+    public string AppBuild { get; set; } = "12";
     public string ExecutablePath { get; set; } = Environment.ProcessPath ?? "";
 
     public static void Reload() => Current = Load();

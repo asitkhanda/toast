@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="Toast.Views.DeploymentRowControl"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Border
+        Padding="12,10"
+        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+        BorderThickness="1"
+        CornerRadius="8">
+        <StackPanel Spacing="8">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Spacing="2">
+                    <TextBlock
+                        x:Name="ProjectNameText"
+                        Style="{StaticResource BodyStrongTextBlockStyle}"
+                        TextWrapping="NoWrap"
+                        TextTrimming="CharacterEllipsis" />
+                    <TextBlock
+                        x:Name="DeployedText"
+                        FontSize="11"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Visibility="Collapsed" />
+                    <TextBlock
+                        x:Name="CheckedText"
+                        FontSize="11"
+                        Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
+                </StackPanel>
+                <Border
+                    x:Name="StatusBadge"
+                    Grid.Column="1"
+                    Padding="8,3"
+                    VerticalAlignment="Top"
+                    CornerRadius="999">
+                    <TextBlock
+                        x:Name="StatusBadgeText"
+                        FontSize="11"
+                        FontWeight="SemiBold" />
+                </Border>
+            </Grid>
+
+            <StackPanel x:Name="MetaRow" Orientation="Horizontal" Spacing="6" Visibility="Collapsed">
+                <Border
+                    x:Name="ProductionTag"
+                    Padding="6,2"
+                    Background="#1FAF52DE"
+                    CornerRadius="999"
+                    Visibility="Collapsed">
+                    <TextBlock Text="Production" FontSize="10" FontWeight="Medium" Foreground="#AF52DE" />
+                </Border>
+                <Border
+                    x:Name="BranchTag"
+                    Padding="6,2"
+                    Background="{ThemeResource ControlAltFillColorTertiaryBrush}"
+                    CornerRadius="999"
+                    Visibility="Collapsed">
+                    <TextBlock
+                        x:Name="BranchText"
+                        FontSize="10"
+                        FontWeight="Medium"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                </Border>
+                <TextBlock
+                    x:Name="ShaText"
+                    FontFamily="Cascadia Mono, Consolas"
+                    FontSize="11"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    VerticalAlignment="Center"
+                    Visibility="Collapsed" />
+            </StackPanel>
+
+            <TextBlock
+                x:Name="CommitText"
+                FontSize="12"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                MaxLines="2"
+                TextWrapping="WrapWholeWords"
+                TextTrimming="CharacterEllipsis"
+                Visibility="Collapsed" />
+
+            <TextBlock
+                x:Name="EmptyText"
+                FontSize="12"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                Text="No deployment data"
+                Visibility="Collapsed" />
+
+            <StackPanel x:Name="ActionsRow" Orientation="Horizontal" Spacing="8" Visibility="Collapsed">
+                <HyperlinkButton
+                    x:Name="PreviewLink"
+                    Content="Open preview"
+                    FontSize="12"
+                    Padding="0"
+                    Click="PreviewLink_Click"
+                    Visibility="Collapsed" />
+                <HyperlinkButton
+                    x:Name="DashboardLink"
+                    Content="Vercel dashboard"
+                    FontSize="12"
+                    Padding="0"
+                    Click="DashboardLink_Click" />
+            </StackPanel>
+        </StackPanel>
+    </Border>
+</UserControl>

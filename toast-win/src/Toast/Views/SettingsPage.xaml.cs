@@ -1,6 +1,7 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Toast.Core.Models;
+using Toast.Helpers;
 
 namespace Toast.Views;
 
@@ -139,8 +140,40 @@ public sealed partial class SettingsPage : Page
         App.Analytics.IsEnabled = AnalyticsToggle.IsOn;
     }
 
-    private async void Update_Click(object sender, RoutedEventArgs e) =>
-        await App.Updater.CheckForUpdatesAsync();
+    private async void Update_Click(object sender, RoutedEventArgs e)
+    {
+        UpdateButton.IsEnabled = false;
+        try
+        {
+            var found = await App.Updater.CheckForUpdatesAsync();
+            if (!found)
+            {
+                var dialog = new ContentDialog
+                {
+                    Title = "You're up to date",
+                    Content = $"Toast {AppConfig.Current.AppVersion} is the latest version.",
+                    CloseButtonText = "OK",
+                    XamlRoot = XamlRoot,
+                };
+                await dialog.ShowAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            var dialog = new ContentDialog
+            {
+                Title = "Update check failed",
+                Content = ex.Message,
+                CloseButtonText = "OK",
+                XamlRoot = XamlRoot,
+            };
+            await dialog.ShowAsync();
+        }
+        finally
+        {
+            UpdateButton.IsEnabled = true;
+        }
+    }
 
     private sealed class ProjectPick
     {

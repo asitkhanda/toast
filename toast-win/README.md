@@ -51,12 +51,21 @@ CI uses the same secrets (`WINDOWS_CERTIFICATE_P12`, `WINDOWS_CERTIFICATE_PASSWO
 ### Feature parity (Mac)
 
 - Onboarding (token → projects → background prefs)
-- Tray status + popover list
+- Tray status icon (brand mark + Ready/Building/Error badge) + modern popover with clickable preview/dashboard links
 - Settings (token, projects, notifications, startup, analytics)
 - 5s / 60s poll loop
 - Desktop notifications on build → ready/error
-- Crash prompt + analytics rollout notice
-- Velopack auto-update (Sparkle analogue)
+- Close-to-tray (stays in notification area + Alt+Tab while open)
+- Crash prompt + analytics (`launcher_relaunch`, `app_crash`, `$exception`)
+- Velopack auto-update (Sparkle analogue): background check ~25s after launch, then every 6h; prompt with **Download and restart** or **Skip for 7 days**
+
+### Icons
+
+App/tray icons are generated from the shared Mac brand art (`web/public/toast_logo.png`):
+
+```powershell
+python toast-win/scripts/generate-icons.py
+```
 
 ## Release
 

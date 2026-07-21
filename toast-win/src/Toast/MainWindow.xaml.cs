@@ -10,9 +10,10 @@ public sealed partial class MainWindow : Window
     {
         InitializeComponent();
         ExtendsContentIntoTitleBar = true;
+        Title = "Toast";
 
         // WinUI Window has no Width/Height XAML props — size via AppWindow.
-        AppWindow.Resize(new SizeInt32(400, 560));
+        AppWindow.Resize(new SizeInt32(420, 620));
     }
 
     public void NavigateToOnboarding() => RootFrame.Navigate(typeof(OnboardingPage));
@@ -24,4 +25,7 @@ public sealed partial class MainWindow : Window
     public void ShowCrashPrompt() => RootFrame.Navigate(typeof(CrashPromptPage));
 
     public void ShowAnalyticsNotice() => RootFrame.Navigate(typeof(AnalyticsNoticePage));
+
+    public void ShowUpdateAvailable(string version) =>
+        RootFrame.Navigate(typeof(UpdateAvailablePage), version);
 }

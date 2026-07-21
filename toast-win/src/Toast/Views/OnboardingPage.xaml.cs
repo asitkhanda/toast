@@ -58,6 +58,7 @@ public sealed partial class OnboardingPage : Page
                     RunInBackground = RunInBackgroundToggle.IsOn,
                     RelaunchOnCrash = RelaunchOnCrashToggle.IsOn,
                 });
+                (Application.Current as App)?.StartUpdateChecksAfterOnboarding();
                 (App.MainWindowInstance as MainWindow)?.NavigateToPopover();
                 return;
             }

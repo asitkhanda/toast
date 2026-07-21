@@ -151,7 +151,7 @@ swift package reset
 ## 5. Submit for review
 
 1. In App Store Connect, open your app → **macOS App**
-2. Create a new version (e.g. `0.4.1`)
+2. Create a new version (e.g. `0.4.2`)
 3. Select the uploaded build
 4. Fill in **What’s New**
 5. Submit for review
