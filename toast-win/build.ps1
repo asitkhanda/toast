@@ -28,6 +28,13 @@ if ([string]::IsNullOrWhiteSpace($Version)) {
 
 Write-Host "Building Toast for Windows v$Version ($Configuration)"
 
+Write-Host "Validating XAML StaticResource keys..."
+$python = Get-Command python -ErrorAction SilentlyContinue
+if (-not $python) { $python = Get-Command python3 -ErrorAction SilentlyContinue }
+if (-not $python) { throw "python/python3 required to validate XAML resources" }
+& $python.Source "$Root/scripts/validate-xaml-resources.py"
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
 # RID win-x64 is enough; do not pass Platform=x64 — that redirects output to bin/x64/...
 # and breaks the publishDir path below.
 $commonProps = @(

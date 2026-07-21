@@ -1,0 +1,81 @@
+name: CI Windows
+
+on:
+  push:
+    paths:
+      - "toast-win/**"
+      - ".github/workflows/ci-windows.yml"
+  pull_request:
+    paths:
+      - "toast-win/**"
+      - ".github/workflows/ci-windows.yml"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-windows-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-xaml:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate StaticResource keys
+        run: python3 toast-win/scripts/validate-xaml-resources.py
+
+  build-windows:
+    needs: validate-xaml
+    # windows-2022 keeps the Win10 SDK required by net8.0-windows10.0.19041.0.
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Add .NET global tools to PATH
+        shell: pwsh
+        run: |
+          echo "$env:USERPROFILE\.dotnet\tools" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      - name: Publish Toast (SkipPack)
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          & "$env:GITHUB_WORKSPACE/toast-win/build.ps1" -SkipPack
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Smoke-check publish output
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $candidates = @(
+            "$env:GITHUB_WORKSPACE/toast-win/src/Toast/bin/Release/net8.0-windows10.0.19041.0/win-x64/publish/Toast.exe",
+            "$env:GITHUB_WORKSPACE/toast-win/src/Toast/bin/x64/Release/net8.0-windows10.0.19041.0/win-x64/publish/Toast.exe"
+          )
+          $exe = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+          if (-not $exe) {
+            Get-ChildItem "$env:GITHUB_WORKSPACE/toast-win/src/Toast/bin" -Recurse -Filter Toast.exe -ErrorAction SilentlyContinue |
+              ForEach-Object { Write-Host "found: $($_.FullName)" }
+            throw "Toast.exe missing after publish"
+          }
+          Write-Host "OK: $exe"
+          $watchdog = Join-Path (Split-Path $exe -Parent) "Toast.Watchdog.exe"
+          if (-not (Test-Path $watchdog)) {
+            throw "Toast.Watchdog.exe missing beside Toast.exe"
+          }
+          Write-Host "OK: $watchdog"
+
+      - name: Upload publish folder
+        uses: actions/upload-artifact@v4
+        with:
+          name: toast-win-publish
+          path: |
+            toast-win/src/Toast/bin/Release/net8.0-windows10.0.19041.0/win-x64/publish/**
+            toast-win/src/Toast/bin/x64/Release/net8.0-windows10.0.19041.0/win-x64/publish/**
+          if-no-files-found: error

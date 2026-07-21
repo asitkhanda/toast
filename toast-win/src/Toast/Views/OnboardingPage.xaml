@@ -8,11 +8,17 @@
             <TextBlock Text="Toast" Style="{StaticResource TitleTextBlockStyle}" />
             <TextBlock x:Name="StepTitle" Text="Connect your Vercel token" TextWrapping="WrapWholeWords"
                        Style="{StaticResource SubtitleTextBlockStyle}" />
-            <TextBlock Text="Use a read-only, team-scoped personal access token." TextWrapping="WrapWholeWords"
-                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+            <TextBlock
+                x:Name="TokenHelpText"
+                Text="Use a read-only, team-scoped personal access token."
+                TextWrapping="WrapWholeWords"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
 
             <PasswordBox x:Name="TokenBox" PlaceholderText="Vercel token" PasswordRevealMode="Peek" />
-            <HyperlinkButton Content="How to create a token" NavigateUri="https://vercel.com/account/tokens" />
+            <HyperlinkButton
+                x:Name="TokenHelpLink"
+                Content="How to create a token"
+                NavigateUri="https://vercel.com/account/tokens" />
 
             <TextBlock x:Name="ErrorText" Foreground="{ThemeResource SystemFillColorCriticalBrush}" TextWrapping="WrapWholeWords" Visibility="Collapsed" />
             <TextBlock x:Name="ScopeWarning" Foreground="{ThemeResource SystemFillColorCautionBrush}" TextWrapping="WrapWholeWords" Visibility="Collapsed" />

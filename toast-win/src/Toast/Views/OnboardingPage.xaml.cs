@@ -67,7 +67,8 @@ public sealed partial class OnboardingPage : Page
         }
         catch (Exception ex)
         {
-            ErrorText.Text = ex.Message;
+            // WinRT often prefixes a useless HRESULT string; prefer the inner XAML detail.
+            ErrorText.Text = FormatError(ex);
             ErrorText.Visibility = Visibility.Visible;
         }
         finally
@@ -115,7 +116,10 @@ public sealed partial class OnboardingPage : Page
 
     private void RefreshStep()
     {
-        TokenBox.Visibility = _step == 0 ? Visibility.Visible : Visibility.Collapsed;
+        var onToken = _step == 0;
+        TokenHelpText.Visibility = onToken ? Visibility.Visible : Visibility.Collapsed;
+        TokenBox.Visibility = onToken ? Visibility.Visible : Visibility.Collapsed;
+        TokenHelpLink.Visibility = onToken ? Visibility.Visible : Visibility.Collapsed;
         ProjectList.Visibility = _step == 1 ? Visibility.Visible : Visibility.Collapsed;
         BackgroundPanel.Visibility = _step == 2 ? Visibility.Visible : Visibility.Collapsed;
         StepTitle.Text = _step switch
@@ -125,6 +129,33 @@ public sealed partial class OnboardingPage : Page
             _ => "Keep Toast running",
         };
         PrimaryButton.Content = _step == 2 ? "Finish" : "Continue";
+    }
+
+    private static string FormatError(Exception ex)
+    {
+        var candidates = new List<string>();
+        for (var current = ex; current is not null; current = current.InnerException)
+        {
+            if (!string.IsNullOrWhiteSpace(current.Message))
+                candidates.Add(current.Message.Trim());
+        }
+
+        foreach (var message in candidates)
+        {
+            if (message.Contains("Cannot find a Resource", StringComparison.OrdinalIgnoreCase)
+                || message.Contains("XamlParse", StringComparison.OrdinalIgnoreCase))
+            {
+                return message;
+            }
+        }
+
+        foreach (var message in candidates)
+        {
+            if (!message.Contains("text associated with this error code", StringComparison.OrdinalIgnoreCase))
+                return message;
+        }
+
+        return ex.GetBaseException().Message;
     }
 
     private sealed class ProjectPick
