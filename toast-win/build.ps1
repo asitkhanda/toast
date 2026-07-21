@@ -75,8 +75,7 @@ dotnet publish "src/Toast.Watchdog/Toast.Watchdog.csproj" `
     -c $Configuration `
     -r win-x64 `
     --self-contained false `
-    -o $publishDir `
-    --no-self-contained
+    -o $publishDir
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
 $dist = Join-Path $Root "dist"
