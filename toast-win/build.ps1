@@ -70,11 +70,12 @@ if (-not $publishDir) {
 
 Write-Host "Publish dir: $publishDir"
 
-# Ensure watchdog is in publish output (framework-dependent; same RID as host publish).
+# Publish watchdog into the same folder as self-contained Toast so users
+# do not need a machine-wide .NET 8 runtime install.
 dotnet publish "src/Toast.Watchdog/Toast.Watchdog.csproj" `
     -c $Configuration `
     -r win-x64 `
-    --self-contained false `
+    --self-contained true `
     -o $publishDir
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
