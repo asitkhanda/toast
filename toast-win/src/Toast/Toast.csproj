@@ -53,7 +53,7 @@
     </None>
   </ItemGroup>
 
-  <PropertyGroup Condition="'$(DisableMsixProjectCapabilityAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
+  <ItemGroup Condition="'$(DisableMsixProjectCapabilityAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
     <ProjectCapability Include="Msix" />
-  </PropertyGroup>
+  </ItemGroup>
 </Project>
