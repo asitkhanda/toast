@@ -1,5 +1,7 @@
+using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Toast.Views;
+using Windows.Graphics;
 
 namespace Toast;
 
@@ -9,6 +11,14 @@ public sealed partial class MainWindow : Window
     {
         InitializeComponent();
         ExtendsContentIntoTitleBar = true;
+
+        // WinUI Window has no Width/Height XAML props — size via AppWindow.
+        AppWindow.Resize(new SizeInt32(400, 560));
+        if (AppWindow.Presenter is OverlappedPresenter presenter)
+        {
+            presenter.PreferredMinimumWidth = 360;
+            presenter.PreferredMinimumHeight = 420;
+        }
     }
 
     public void NavigateToOnboarding() => RootFrame.Navigate(typeof(OnboardingPage));

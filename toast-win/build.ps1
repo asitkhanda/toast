@@ -45,7 +45,15 @@ dotnet publish "src/Toast/Toast.csproj" `
     -r win-x64 `
     --self-contained true `
     @commonProps
-if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+if ($LASTEXITCODE -ne 0) {
+    # XamlCompiler often exits 1 with only MSB3073 — dump its JSON diagnostics if present.
+    Get-ChildItem -Path (Join-Path $Root "src/Toast/obj") -Recurse -Filter "output.json" -ErrorAction SilentlyContinue |
+        ForEach-Object {
+            Write-Host "---- $($_.FullName) ----"
+            Get-Content $_.FullName -Raw -ErrorAction SilentlyContinue
+        }
+    exit $LASTEXITCODE
+}
 
 $publishCandidates = @(
     (Join-Path $Root "src/Toast/bin/$Configuration/net8.0-windows10.0.19041.0/win-x64/publish"),
