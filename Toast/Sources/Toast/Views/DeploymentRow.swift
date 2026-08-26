@@ -83,6 +83,11 @@ struct DeploymentRow: View {
                 Text(RelativeDateFormat.label(for: status.fetchedAt, prefix: "Checked"))
                     .font(.caption2)
                     .foregroundStyle(.tertiary)
+                if status.isStale {
+                    Text("Showing last known data")
+                        .font(.caption2)
+                        .foregroundStyle(.orange)
+                }
             }
         }
     }

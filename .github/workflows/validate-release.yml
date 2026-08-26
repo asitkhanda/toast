@@ -1,0 +1,32 @@
+name: Validate Release Metadata
+
+on:
+  pull_request:
+    paths:
+      - "Toast/Resources/Info.plist"
+      - "toast-win/**"
+      - "toast-tap/**"
+      - "web/public/appcast.xml"
+      - "scripts/validate-release.py"
+      - ".github/workflows/validate-release.yml"
+  push:
+    branches: [main]
+    paths:
+      - "Toast/Resources/Info.plist"
+      - "toast-win/**"
+      - "toast-tap/**"
+      - "web/public/appcast.xml"
+      - "scripts/validate-release.py"
+      - ".github/workflows/validate-release.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  metadata:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate release metadata
+        run: python3 scripts/validate-release.py --cask toast-tap/Casks/toast-app.rb

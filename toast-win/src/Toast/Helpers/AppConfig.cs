@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Reflection;
 
 namespace Toast.Helpers;
 
@@ -9,8 +10,8 @@ public sealed class AppConfig
     public string PostHogApiKey { get; set; } = "";
     public string PostHogHost { get; set; } = "https://us.i.posthog.com";
     public string UpdateUrl { get; set; } = "https://github.com/asitkhanda/toast";
-    public string AppVersion { get; set; } = "0.4.2";
-    public string AppBuild { get; set; } = "12";
+    public string AppVersion { get; set; } = "0.0.0";
+    public string AppBuild { get; set; } = "0";
     public string ExecutablePath { get; set; } = Environment.ProcessPath ?? "";
 
     public static void Reload() => Current = Load();
@@ -38,6 +39,13 @@ public sealed class AppConfig
         catch
         {
             // Use defaults.
+        }
+
+        var assemblyVersion = Assembly.GetEntryAssembly()?.GetName().Version;
+        if (assemblyVersion is not null)
+        {
+            config.AppVersion = string.Join(".", assemblyVersion.Major, assemblyVersion.Minor, assemblyVersion.Build);
+            config.AppBuild = Math.Max(assemblyVersion.Revision, 0).ToString();
         }
 
         config.ExecutablePath = Environment.ProcessPath ?? "";

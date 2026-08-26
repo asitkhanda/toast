@@ -82,3 +82,14 @@ jobs:
           name: toast-win-setup
           path: toast-win/dist/*Setup.exe
           if-no-files-found: error
+
+  test-core:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+      - name: Run Toast.Core tests
+        run: dotnet test toast-win/tests/Toast.Core.Tests/Toast.Core.Tests.csproj --configuration Release

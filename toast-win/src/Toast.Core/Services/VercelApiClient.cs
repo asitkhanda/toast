@@ -116,37 +116,55 @@ public sealed class VercelApiClient
 
     private async Task<T> GetAsync<T>(string path, CancellationToken ct)
     {
-        try
+        for (var attempt = 0; ; attempt++)
         {
-            using var request = new HttpRequestMessage(HttpMethod.Get, path);
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _token);
-            using var response = await _http.SendAsync(request, ct);
-            var body = await response.Content.ReadAsStringAsync(ct);
-
-            if (!response.IsSuccessStatusCode)
-            {
-                throw MapStatus(response.StatusCode);
-            }
-
             try
             {
-                return JsonSerializer.Deserialize<T>(body, JsonOptions)
-                    ?? throw new VercelApiException(VercelApiErrorKind.DecodingFailed, "Unexpected response from Vercel.");
+                using var request = new HttpRequestMessage(HttpMethod.Get, path);
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _token);
+                using var response = await _http.SendAsync(request, ct);
+                var body = await response.Content.ReadAsStringAsync(ct);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    throw MapStatus(response.StatusCode);
+                }
+
+                try
+                {
+                    return JsonSerializer.Deserialize<T>(body, JsonOptions)
+                        ?? throw new VercelApiException(VercelApiErrorKind.DecodingFailed, "Unexpected response from Vercel.");
+                }
+                catch (JsonException ex)
+                {
+                    throw new VercelApiException(VercelApiErrorKind.DecodingFailed, "Unexpected response from Vercel.", inner: ex);
+                }
             }
-            catch (JsonException ex)
+            catch (OperationCanceledException)
             {
-                throw new VercelApiException(VercelApiErrorKind.DecodingFailed, "Unexpected response from Vercel.", inner: ex);
+                throw;
             }
-        }
-        catch (VercelApiException)
-        {
-            throw;
-        }
-        catch (Exception ex)
-        {
-            throw new VercelApiException(VercelApiErrorKind.Network, ex.Message, inner: ex);
+            catch (VercelApiException ex) when (IsRetryable(ex) && attempt < 2)
+            {
+                await Task.Delay(TimeSpan.FromMilliseconds(attempt == 0 ? 500 : 1500), ct);
+            }
+            catch (VercelApiException)
+            {
+                throw;
+            }
+            catch (Exception ex) when (attempt < 2)
+            {
+                await Task.Delay(TimeSpan.FromMilliseconds(attempt == 0 ? 500 : 1500), ct);
+            }
+            catch (Exception ex)
+            {
+                throw new VercelApiException(VercelApiErrorKind.Network, ex.Message, inner: ex);
+            }
         }
     }
+
+    private static bool IsRetryable(VercelApiException error) =>
+        error.Kind is VercelApiErrorKind.RateLimited or VercelApiErrorKind.ServerError or VercelApiErrorKind.Network;
 
     private static VercelApiException MapStatus(HttpStatusCode status) => status switch
     {

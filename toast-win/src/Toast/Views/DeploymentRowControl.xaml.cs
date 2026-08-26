@@ -40,7 +40,9 @@ public sealed partial class DeploymentRowControl : UserControl
             DeployedText.Visibility = Visibility.Collapsed;
         }
 
-        CheckedText.Text = RelativeDateFormat.Label(status.FetchedAt, "Checked");
+        CheckedText.Text = status.IsStale
+            ? $"{RelativeDateFormat.Label(status.FetchedAt, "Checked")} · Showing last known data"
+            : RelativeDateFormat.Label(status.FetchedAt, "Checked");
 
         if (deployment is null)
         {

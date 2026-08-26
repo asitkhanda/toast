@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text.Json;
 using Microsoft.Win32;
 using Toast.Core.Services;
 using Toast.Helpers;
@@ -44,18 +45,8 @@ public sealed class WindowsBackgroundService : IBackgroundService
     {
         try
         {
-            foreach (var existing in Process.GetProcessesByName("Toast.Watchdog"))
-            {
-                try
-                {
-                    existing.Kill();
-                }
-                catch
-                {
-                    // Ignore.
-                }
-            }
-
+            _prefs.SetBool("watchdogEnabled", enabled);
+            WriteRuntime(userQuit: false, running: true);
             if (!enabled)
             {
                 return;
@@ -96,9 +87,12 @@ public sealed class WindowsBackgroundService : IBackgroundService
                 return false;
             }
 
-            var json = File.ReadAllText(_runtimePath);
-            return json.Contains("\"userQuit\":false", StringComparison.Ordinal)
-                && json.Contains("\"running\":true", StringComparison.Ordinal);
+            using var doc = JsonDocument.Parse(File.ReadAllText(_runtimePath));
+            var root = doc.RootElement;
+            return root.TryGetProperty("userQuit", out var userQuit)
+                && !userQuit.GetBoolean()
+                && root.TryGetProperty("running", out var running)
+                && running.GetBoolean();
         }
         catch
         {
@@ -137,7 +131,8 @@ public sealed class WindowsBackgroundService : IBackgroundService
     {
         try
         {
-            var json = $"{{\"userQuit\":{(userQuit ? "true" : "false")},\"running\":{(running ? "true" : "false")}}}";
+            var watchdogEnabled = _prefs.GetBool("watchdogEnabled", true);
+            var json = $"{{\"userQuit\":{(userQuit ? "true" : "false")},\"running\":{(running ? "true" : "false")},\"watchdogEnabled\":{(watchdogEnabled ? "true" : "false")}}}";
             File.WriteAllText(_runtimePath, json);
         }
         catch

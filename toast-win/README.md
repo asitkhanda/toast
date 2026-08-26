@@ -22,6 +22,10 @@ Full Velopack package (writes `dist/Toast-{version}-win-x64-Setup.exe`):
 ```
 
 Version is read from [`../Toast/Resources/Info.plist`](../Toast/Resources/Info.plist) so Mac and Windows stay aligned.
+Release builds inject both version and build metadata from that plist; the
+Windows runtime does not rely on a separately maintained release version in
+`appsettings.json`.
+The Velopack CLI is pinned by `build.ps1` for reproducible packaging.
 
 ### Authenticode signing (optional)
 

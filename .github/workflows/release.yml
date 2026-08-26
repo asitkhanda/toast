@@ -159,37 +159,43 @@ jobs:
           if-no-files-found: error
 
       - name: Bump Homebrew cask
-        continue-on-error: true
         env:
           VERSION: ${{ needs.version.outputs.version }}
           DMG_NAME: ${{ needs.version.outputs.dmg_name }}
           TAP_REPO: asitkhanda/homebrew-toast-tap
-          GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN || secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
         run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "HOMEBREW_TAP_TOKEN is required to update ${TAP_REPO}."
+            exit 1
+          fi
           cd Toast/dist
-          shasum -a 256 "$DMG_NAME" > /tmp/mac-dmg.sha
-          DMG_SHA=$(awk '{ print $1; exit }' /tmp/mac-dmg.sha)
+          DMG_SHA=$(shasum -a 256 "$DMG_NAME" | awk '{ print $1; exit }')
           if [ -z "$DMG_SHA" ]; then
             echo "Could not compute SHA256 for $DMG_NAME"
             exit 1
           fi
           if ! git clone --depth 1 "https://x-access-token:${GH_TOKEN}@github.com/${TAP_REPO}.git" /tmp/toast-tap 2>/dev/null; then
-            echo "Skipping Homebrew cask bump — could not clone ${TAP_REPO}"
-            exit 0
+            echo "Could not clone ${TAP_REPO}; release is stopping before publish."
+            exit 1
           fi
           cd /tmp/toast-tap
           cp "$GITHUB_WORKSPACE/scripts/bump-homebrew-cask.sh" /tmp/bump-homebrew-cask.sh
           chmod +x /tmp/bump-homebrew-cask.sh
           /tmp/bump-homebrew-cask.sh "$VERSION" "$DMG_SHA" Casks/toast-app.rb
+          python3 "$GITHUB_WORKSPACE/scripts/validate-release.py" \
+            --cask Casks/toast-app.rb \
+            --skip-appcast \
+            --dmg-sha "$DMG_SHA"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add Casks/toast-app.rb
           if git diff --staged --quiet; then
             echo "No cask changes to commit"
-            exit 0
+          else
+            git commit -m "Bump toast-app to ${VERSION}"
+            git push origin HEAD
           fi
-          git commit -m "Bump toast-app to ${VERSION}"
-          git push origin HEAD
 
       - name: Update appcast
         env:
@@ -200,6 +206,18 @@ jobs:
           TAG: ${{ needs.version.outputs.tag }}
           REPO: ${{ github.repository }}
         run: python3 scripts/update-appcast.py
+
+      - name: Validate appcast and Mac artifacts
+        env:
+          TAG: ${{ needs.version.outputs.tag }}
+        run: |
+          python3 scripts/validate-release.py \
+            --skip-cask \
+            --artifacts Toast/dist \
+            --skip-appcast
+          python3 scripts/validate-release.py \
+            --skip-cask \
+            --tag "$TAG"
 
       - name: Commit appcast
         run: |
@@ -321,6 +339,18 @@ jobs:
             fi
           done
           cat SHA256SUMS.txt
+
+      - name: Validate published artifacts
+        shell: bash
+        run: |
+          WINDOWS_FLAG=""
+          if [ -f "release-assets/${{ needs.version.outputs.win_setup_name }}" ]; then
+            WINDOWS_FLAG="--require-windows"
+          fi
+          python3 scripts/validate-release.py \
+            --skip-cask \
+            --skip-appcast \
+            --artifacts release-assets $WINDOWS_FLAG
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2

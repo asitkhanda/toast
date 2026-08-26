@@ -54,5 +54,10 @@ let package = Package(
             dependencies: ["Shared"],
             path: "Sources/ToastLauncher"
         ),
+        .testTarget(
+            name: "ToastTests",
+            dependencies: ["Toast"],
+            path: "Tests/ToastTests"
+        ),
     ]
 )

@@ -28,6 +28,7 @@ public sealed class ProjectDeploymentStatus
     public required WatchedProject Watched { get; init; }
     public Deployment? Deployment { get; init; }
     public DateTimeOffset FetchedAt { get; init; }
+    public bool IsStale { get; init; }
     public string Id => Watched.Id;
     public DeploymentState Status => Deployment?.Status ?? DeploymentState.Queued;
 }
@@ -73,6 +74,7 @@ public sealed class DeploymentStore : INotifyPropertyChanged
     private string? _connectedTeamName;
     private CancellationTokenSource? _pollCts;
     private readonly Dictionary<string, DeploymentState> _previousStatuses = new();
+    private readonly Dictionary<string, Deployment> _lastSuccessfulDeployments = new();
     private bool _isLoadingPreferences;
 
     public DeploymentStore(
@@ -359,6 +361,8 @@ public sealed class DeploymentStore : INotifyPropertyChanged
         _projects = [];
         _projectStatuses = [];
         _watchedProjects = [];
+        _previousStatuses.Clear();
+        _lastSuccessfulDeployments.Clear();
         SelectedTeamId = null;
         SetLastError(null);
         _tokenScopeWarning = null;
@@ -557,11 +561,16 @@ public sealed class DeploymentStore : INotifyPropertyChanged
                         limit: 1,
                         ct);
                     var deployment = deployments.FirstOrDefault();
+                    if (deployment is not null)
+                    {
+                        _lastSuccessfulDeployments[watched.Id] = deployment;
+                    }
                     results.Add(new ProjectDeploymentStatus
                     {
                         Watched = watched,
                         Deployment = deployment,
                         FetchedAt = DateTimeOffset.UtcNow,
+                        IsStale = false,
                     });
                     await HandleStatusTransitionAsync(watched, deployment);
                 }
@@ -577,8 +586,9 @@ public sealed class DeploymentStore : INotifyPropertyChanged
                     results.Add(new ProjectDeploymentStatus
                     {
                         Watched = watched,
-                        Deployment = null,
+                        Deployment = _lastSuccessfulDeployments.GetValueOrDefault(watched.Id),
                         FetchedAt = DateTimeOffset.UtcNow,
+                        IsStale = true,
                     });
                 }
             }

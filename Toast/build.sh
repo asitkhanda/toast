@@ -71,6 +71,8 @@ else
 
     /usr/libexec/PlistBuddy -c "Add :CFBundleIdentifier string $LAUNCHER_BUNDLE_ID" "$LAUNCHER_APP_DIR/Contents/Info.plist" 2>/dev/null || \
       /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier $LAUNCHER_BUNDLE_ID" "$LAUNCHER_APP_DIR/Contents/Info.plist"
+    /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" "$LAUNCHER_APP_DIR/Contents/Info.plist"
+    /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD_NUMBER" "$LAUNCHER_APP_DIR/Contents/Info.plist"
 
     /usr/libexec/PlistBuddy -c "Add :CFBundleIdentifier string $BUNDLE_ID" "$APP_DIR/Contents/Info.plist" 2>/dev/null || \
       /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier $BUNDLE_ID" "$APP_DIR/Contents/Info.plist"

@@ -86,10 +86,14 @@ See [toast-win/README.md](toast-win/README.md). Requires Windows + .NET 8 SDK.
 ├── web/                   # Static site + /download redirect (Vercel)
 │   ├── api/download.ts    # Edge function → latest .dmg or Windows Setup.exe
 │   └── public/            # Landing page + appcast feed
-├── toast-tap/             # Homebrew tap (push to github.com/asitkhanda/homebrew-toast-tap)
+├── toast-tap/             # Reference copy of the external Homebrew tap
 │   └── Casks/toast-app.rb
 └── .github/workflows/     # Release automation (mac + windows + publish)
 ```
+
+The authoritative Homebrew cask is maintained in the separate
+`homebrew-toast-tap` repository. The `toast-tap/` directory is a validated
+reference copy only.
 
 ## Sparkle signing keys (one-time setup)
 
@@ -137,6 +141,12 @@ Optional: set **`GITHUB_REPO`** (e.g. `owner/repo`) if the repo slug differs fro
 
 ## Releasing a new version
 
+Before tagging, validate local release metadata without publishing:
+
+```bash
+python3 scripts/validate-release.py --cask toast-tap/Casks/toast-app.rb
+```
+
 1. Bump version in `Toast/Resources/Info.plist` (source of truth for both platforms):
    - `CFBundleShortVersionString` — semver (e.g. `0.2.0`)
    - `CFBundleVersion` — increment build number (e.g. `2`)
@@ -160,19 +170,14 @@ Installed macOS apps check `https://toast.asit.space/appcast.xml` automatically 
 
 ### Homebrew tap setup (one-time)
 
-Push the `toast-tap/` directory to a public GitHub repo named `homebrew-toast-tap` (Homebrew requires the `homebrew-` prefix):
+The separate `homebrew-toast-tap` repository is the authoritative public tap
+(Homebrew requires the `homebrew-` prefix). The release workflow requires a
+`HOMEBREW_TAP_TOKEN` secret with write access to that repository.
 
-```bash
-cd toast-tap
-git init
-git add .
-git commit -m "Add toast-app cask"
-git branch -M main
-git remote add origin git@github.com:asitkhanda/homebrew-toast-tap.git
-git push -u origin main
-```
-
-The Release workflow bumps `Casks/toast-app.rb` automatically. If the tap repo is private or under a different account, add a `HOMEBREW_TAP_TOKEN` secret with push access.
+The Release workflow bumps `Casks/toast-app.rb` automatically using
+`HOMEBREW_TAP_TOKEN`. If the tap repository is private or under a different
+account, configure the token with matching write access and update `TAP_REPO`
+in the workflow.
 
 ## Analytics
 

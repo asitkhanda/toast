@@ -1,6 +1,8 @@
 cask "toast-app" do
+  # Reference copy only. The canonical cask is maintained in the external
+  # asitkhanda/homebrew-toast-tap repository.
   version "0.4.2"
-  sha256 "c3c2ab45874893f9e2ad87587a615a7fb5475a57d0033d0db6e16677644b60a7"
+  sha256 "d2e97fb049c5bede2d586919761e4f57228e54ddd6812dbf6fe26a43a3cd9c39"
 
   url "https://github.com/asitkhanda/toast/releases/download/v#{version}/Toast-#{version}.dmg"
   name "Toast"
@@ -15,9 +17,7 @@ cask "toast-app" do
   auto_updates true
 
   caveats <<~EOS
-    Toast is Developer ID signed and notarized. Double-click to open after
-    copying to Applications. If macOS still warns on an older download,
-    right-click Toast in Applications → Open → Open once.
+    Toast is Developer ID signed and notarized. It should open normally from Applications or Homebrew.
   EOS
 
   zap trash: [

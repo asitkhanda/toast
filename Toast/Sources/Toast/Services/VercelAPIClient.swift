@@ -115,6 +115,20 @@ struct VercelAPIClient: Sendable {
     }
 
     private func get<T: Decodable>(_ path: String, query: [String: String] = [:]) async throws -> T {
+        var attempt = 0
+        while true {
+            do {
+                return try await performGet(path, query: query)
+            } catch let error as VercelAPIError {
+                guard isRetryable(error), attempt < 2 else { throw error }
+                guard !Task.isCancelled else { throw CancellationError() }
+                attempt += 1
+                try await Task.sleep(for: .milliseconds(attempt == 1 ? 500 : 1500))
+            }
+        }
+    }
+
+    private func performGet<T: Decodable>(_ path: String, query: [String: String] = [:]) async throws -> T {
         guard var components = URLComponents(string: "https://api.vercel.com\(path)") else {
             throw VercelAPIError.invalidURL
         }
@@ -134,6 +148,8 @@ struct VercelAPIClient: Sendable {
         let response: URLResponse
         do {
             (data, response) = try await session.data(for: request)
+        } catch is CancellationError {
+            throw CancellationError()
         } catch {
             throw VercelAPIError.network(error)
         }
@@ -163,6 +179,15 @@ struct VercelAPIClient: Sendable {
             return try decoder.decode(T.self, from: data)
         } catch {
             throw VercelAPIError.decodingFailed(error)
+        }
+    }
+
+    private func isRetryable(_ error: VercelAPIError) -> Bool {
+        switch error {
+        case .rateLimited, .serverError, .network:
+            true
+        default:
+            false
         }
     }
 }

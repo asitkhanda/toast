@@ -48,6 +48,11 @@ internal static class Program
 
                 using var doc = JsonDocument.Parse(await File.ReadAllTextAsync(runtimePath));
                 var root = doc.RootElement;
+                if (root.TryGetProperty("watchdogEnabled", out var watchdogEnabled)
+                    && !watchdogEnabled.GetBoolean())
+                {
+                    return;
+                }
                 var userQuit = root.TryGetProperty("userQuit", out var u) && u.GetBoolean();
                 if (userQuit)
                 {

@@ -18,6 +18,7 @@ struct ProjectDeploymentStatus: Identifiable, Sendable {
     let watched: WatchedProject
     let deployment: Deployment?
     let fetchedAt: Date
+    let isStale: Bool
 
     var id: String { watched.id }
 
@@ -123,6 +124,7 @@ final class DeploymentStore {
 
     private var pollTask: Task<Void, Never>?
     private var previousStatuses: [String: DeploymentState] = [:]
+    private var lastSuccessfulDeployments: [String: Deployment] = [:]
     private var isLoadingPreferences = false
 
     private func makeAPIClient() -> VercelAPIClient? {
@@ -230,6 +232,8 @@ final class DeploymentStore {
         projects = []
         projectStatuses = []
         watchedProjects = []
+        previousStatuses = [:]
+        lastSuccessfulDeployments = [:]
         selectedTeamId = nil
         lastError = nil
         tokenScopeWarning = nil
@@ -357,10 +361,14 @@ final class DeploymentStore {
                     limit: 1
                 )
                 let deployment = deployments.first
+                if let deployment {
+                    lastSuccessfulDeployments[watched.id] = deployment
+                }
                 results.append(ProjectDeploymentStatus(
                     watched: watched,
                     deployment: deployment,
-                    fetchedAt: Date()
+                    fetchedAt: Date(),
+                    isStale: false
                 ))
                 await handleStatusTransition(watched: watched, deployment: deployment)
             } catch {
@@ -371,8 +379,9 @@ final class DeploymentStore {
                 }
                 results.append(ProjectDeploymentStatus(
                     watched: watched,
-                    deployment: nil,
-                    fetchedAt: Date()
+                    deployment: lastSuccessfulDeployments[watched.id],
+                    fetchedAt: Date(),
+                    isStale: true
                 ))
             }
         }

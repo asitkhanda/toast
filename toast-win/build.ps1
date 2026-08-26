@@ -9,6 +9,7 @@ param(
 $ErrorActionPreference = "Stop"
 $Root = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location $Root
+$VpkVersion = "0.0.1053"
 
 function Read-MacVersion {
     $plist = Join-Path (Split-Path $Root -Parent) "Toast/Resources/Info.plist"
@@ -114,9 +115,9 @@ if (-not $SkipPack) {
         $env:PATH = "$toolsDir;$env:PATH"
     }
 
-    dotnet tool update -g vpk
+    dotnet tool update -g vpk --version $VpkVersion
     if ($LASTEXITCODE -ne 0) {
-        dotnet tool install -g vpk
+        dotnet tool install -g vpk --version $VpkVersion
         if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     }
 
