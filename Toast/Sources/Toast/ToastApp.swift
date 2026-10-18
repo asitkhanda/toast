@@ -12,13 +12,10 @@ struct ToastApp: App {
 
     var body: some Scene {
         MenuBarExtra {
-            Group {
-                if store.hasCompletedOnboarding {
-                    MenuBarPopover()
-                } else {
-                    OnboardingView()
-                }
-            }
+            MenuBarContent(
+                showCrashReportPrompt: $showCrashReportPrompt,
+                showAnalyticsRolloutNotice: $showAnalyticsRolloutNotice
+            )
             .environment(store)
             .environment(updater)
             .id(store.hasCompletedOnboarding)
@@ -30,17 +27,6 @@ struct ToastApp: App {
                           AnalyticsService.shared.shouldShowAnalyticsRolloutNotice
                 {
                     showAnalyticsRolloutNotice = true
-                }
-            }
-            .sheet(isPresented: $showCrashReportPrompt) {
-                CrashReportPrompt {
-                    showCrashReportPrompt = false
-                }
-            }
-            .sheet(isPresented: $showAnalyticsRolloutNotice) {
-                AnalyticsRolloutNotice {
-                    AnalyticsService.shared.markAnalyticsRolloutNoticeSeen()
-                    showAnalyticsRolloutNotice = false
                 }
             }
         } label: {
@@ -61,5 +47,37 @@ struct ToastApp: App {
                 }
         }
         .windowResizability(.contentSize)
+    }
+}
+
+/// Prompts are shown inline rather than as `.sheet`s: on macOS 27 a sheet hosted by the
+/// MenuBarExtra window crashes SwiftUI while resolving its environment, which killed the app
+/// as soon as the popover opened.
+private struct MenuBarContent: View {
+    @Environment(DeploymentStore.self) private var store
+    @Environment(\.openSettings) private var openSettings
+    @Binding var showCrashReportPrompt: Bool
+    @Binding var showAnalyticsRolloutNotice: Bool
+
+    var body: some View {
+        if showCrashReportPrompt {
+            CrashReportPrompt {
+                showCrashReportPrompt = false
+            }
+        } else if showAnalyticsRolloutNotice {
+            AnalyticsRolloutNotice(
+                onOpenSettings: {
+                    AppActivation.openSettings(openSettings)
+                },
+                onDismiss: {
+                    AnalyticsService.shared.markAnalyticsRolloutNoticeSeen()
+                    showAnalyticsRolloutNotice = false
+                }
+            )
+        } else if store.hasCompletedOnboarding {
+            MenuBarPopover()
+        } else {
+            OnboardingView()
+        }
     }
 }

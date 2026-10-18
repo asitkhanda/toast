@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct AnalyticsRolloutNotice: View {
-    @Environment(\.openSettings) private var openSettings
+    let onOpenSettings: () -> Void
     let onDismiss: () -> Void
 
     var body: some View {
@@ -29,7 +29,7 @@ struct AnalyticsRolloutNotice: View {
 
             HStack {
                 Button("Open Settings") {
-                    AppActivation.openSettings(openSettings)
+                    onOpenSettings()
                     onDismiss()
                 }
                 Spacer()

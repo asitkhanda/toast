@@ -19,22 +19,22 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.4.2</string>
+	<string>0.4.3</string>
 	<key>CFBundleVersion</key>
-	<string>12</string>
+	<string>13</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>LSMinimumSystemVersion</key>
 	<string>14.0</string>
 	<key>LSUIElement</key>
 	<true/>
 	<key>NSHighResolutionCapable</key>
 	<true/>
+	<key>PostHogAPIKey</key>
+	<string>phc_xUXi7iy4qdDctgCcH3fPZfSiBBve2tG7bBKcWCwmieK9</string>
 	<key>SUFeedURL</key>
 	<string>https://toast.asit.space/appcast.xml</string>
 	<key>SUPublicEDKey</key>
 	<string>/NJC3Hywm9QCBdL/t+IJefLM4M/keWe60DleHdHk6vU=</string>
-	<key>PostHogAPIKey</key>
-	<string>phc_xUXi7iy4qdDctgCcH3fPZfSiBBve2tG7bBKcWCwmieK9</string>
-	<key>ITSAppUsesNonExemptEncryption</key>
-	<false/>
 </dict>
 </plist>
