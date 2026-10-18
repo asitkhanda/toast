@@ -17,6 +17,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\src\Toast.Core\Toast.Core.csproj" />
   </ItemGroup>
 </Project>
