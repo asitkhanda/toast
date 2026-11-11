@@ -39,6 +39,7 @@ public partial class App : Application
 
         var prefs = new JsonPreferencesStore();
         var tokens = new CredentialTokenStore();
+        var cloudflareTokens = new CredentialTokenStore("Toast/CloudflareToken", "Toast Cloudflare API token");
         _notifications = new WindowsNotificationService();
         _analytics = new PostHogAnalyticsService(prefs, AppConfig.Current);
         _background = new WindowsBackgroundService(prefs);
@@ -49,7 +50,7 @@ public partial class App : Application
             _analytics.MarkPendingCrashReport();
         }
 
-        _store = new DeploymentStore(tokens, prefs, _notifications, _analytics, _background);
+        _store = new DeploymentStore(tokens, cloudflareTokens, prefs, _notifications, _analytics, _background);
         Store = _store;
         Analytics = _analytics;
         Updater = _updater;

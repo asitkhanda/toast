@@ -15,6 +15,10 @@
             </Grid>
 
             <TextBlock Text="Connection" Style="{StaticResource SubtitleTextBlockStyle}" />
+            <StackPanel x:Name="ProviderPanel" Orientation="Horizontal" Spacing="16">
+                <RadioButton x:Name="VercelOption" Content="Vercel" GroupName="Provider" IsChecked="True" Checked="Provider_Checked" />
+                <RadioButton x:Name="CloudflareOption" Content="Cloudflare" GroupName="Provider" Checked="Provider_Checked" />
+            </StackPanel>
             <TextBlock x:Name="ConnectionStatus" TextWrapping="WrapWholeWords" />
             <PasswordBox x:Name="TokenBox" PlaceholderText="Replace Vercel token" />
             <StackPanel Orientation="Horizontal" Spacing="8">
@@ -25,8 +29,15 @@
             <TextBlock x:Name="ScopeWarning" Foreground="{ThemeResource SystemFillColorCautionBrush}" TextWrapping="WrapWholeWords" Visibility="Collapsed" />
 
             <TextBlock Text="Watched projects" Style="{StaticResource SubtitleTextBlockStyle}" />
+            <ComboBox x:Name="AccountPicker" Header="Account" HorizontalAlignment="Stretch"
+                      Visibility="Collapsed" SelectionChanged="AccountPicker_SelectionChanged" />
+            <TextBlock x:Name="ProjectNotice" TextWrapping="WrapWholeWords"
+                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" Visibility="Collapsed" />
             <ListView x:Name="ProjectList" SelectionMode="Multiple" MaxHeight="200" />
-            <Button Content="Save projects" Click="SaveProjects_Click" />
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <Button Content="Save projects" Click="SaveProjects_Click" />
+                <Button Content="Reload projects" Click="ReloadProjects_Click" />
+            </StackPanel>
 
             <TextBlock Text="Menu bar / tray" Style="{StaticResource SubtitleTextBlockStyle}" />
             <ToggleSwitch x:Name="ShowStatusTextToggle" Header="Show status text" Toggled="Pref_Toggled" />

@@ -8,6 +8,10 @@
             <TextBlock Text="Toast" Style="{StaticResource TitleTextBlockStyle}" />
             <TextBlock x:Name="StepTitle" Text="Connect your Vercel token" TextWrapping="WrapWholeWords"
                        Style="{StaticResource SubtitleTextBlockStyle}" />
+            <StackPanel x:Name="ProviderPanel" Orientation="Horizontal" Spacing="16">
+                <RadioButton x:Name="VercelOption" Content="Vercel" GroupName="Provider" IsChecked="True" Checked="Provider_Checked" />
+                <RadioButton x:Name="CloudflareOption" Content="Cloudflare" GroupName="Provider" Checked="Provider_Checked" />
+            </StackPanel>
             <TextBlock
                 x:Name="TokenHelpText"
                 Text="Use a read-only, team-scoped personal access token."

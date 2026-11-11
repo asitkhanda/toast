@@ -4,16 +4,24 @@ using Toast.Core.Services;
 
 namespace Toast.Services;
 
-/// <summary>Stores the Vercel PAT in Windows Credential Manager (local machine, non-roaming).</summary>
+/// <summary>Stores an API token in Windows Credential Manager (local machine, non-roaming).</summary>
 public sealed class CredentialTokenStore : ITokenStore
 {
-    private const string Target = "Toast/VercelPAT";
+    private readonly string _target;
+    private readonly string _comment;
+
+    /// <summary>Defaults keep the original Vercel credential name so existing installs keep working.</summary>
+    public CredentialTokenStore(string target = "Toast/VercelPAT", string comment = "Toast Vercel API token")
+    {
+        _target = target;
+        _comment = comment;
+    }
 
     public bool HasToken() => LoadToken() is not null;
 
     public string? LoadToken()
     {
-        if (!CredReadW(Target, CredType.Generic, 0, out var ptr) || ptr == IntPtr.Zero)
+        if (!CredReadW(_target, CredType.Generic, 0, out var ptr) || ptr == IntPtr.Zero)
         {
             return null;
         }
@@ -42,9 +50,9 @@ public sealed class CredentialTokenStore : ITokenStore
         DeleteToken();
         var bytes = Encoding.Unicode.GetBytes(token + "\0");
         var blob = Marshal.AllocHGlobal(bytes.Length);
-        var targetPtr = Marshal.StringToHGlobalUni(Target);
+        var targetPtr = Marshal.StringToHGlobalUni(_target);
         var userPtr = Marshal.StringToHGlobalUni(Environment.UserName);
-        var commentPtr = Marshal.StringToHGlobalUni("Toast Vercel API token");
+        var commentPtr = Marshal.StringToHGlobalUni(_comment);
         try
         {
             Marshal.Copy(bytes, 0, blob, bytes.Length);
@@ -80,7 +88,7 @@ public sealed class CredentialTokenStore : ITokenStore
 
     public void DeleteToken()
     {
-        CredDeleteW(Target, CredType.Generic, 0);
+        CredDeleteW(_target, CredType.Generic, 0);
     }
 
     private enum CredType

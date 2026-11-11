@@ -51,7 +51,9 @@ public sealed class Project
     [JsonPropertyName("link")]
     public ProjectLink? Link { get; set; }
 
-    public string DisplayName => Name;
+    public string DisplayName => CloudflareProjectIds.TryParse(Id, out var kind, out _)
+        ? $"{Name} ({(kind == CloudflareProjectKind.Pages ? "Pages" : "Worker")})"
+        : Name;
 }
 
 public sealed class ProjectsResponse
@@ -71,6 +73,14 @@ public sealed class WatchedProject
     [JsonPropertyName("teamId")]
     public string TeamId { get; set; } = "";
 
+    /// <summary>Saved entries from before Cloudflare support have no provider and load as Vercel.</summary>
+    [JsonPropertyName("provider")]
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    public DeploymentProvider Provider { get; set; } = DeploymentProvider.Vercel;
+
+    /// <summary>Vercel IDs keep their original format so saved state stays valid.</summary>
     [JsonIgnore]
-    public string Id => $"{TeamId}:{ProjectId}";
+    public string Id => Provider == DeploymentProvider.Vercel
+        ? $"{TeamId}:{ProjectId}"
+        : $"cloudflare:{TeamId}:{ProjectId}";
 }

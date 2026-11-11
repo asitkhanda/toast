@@ -1,4 +1,5 @@
 using Microsoft.UI.Xaml;
+using Toast.Core.Models;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Toast.Core.Store;
@@ -78,11 +79,30 @@ public sealed partial class PopoverPage : Page
         }
 
         var showNames = store.ProjectStatuses.Count > 1;
-        foreach (var status in store.ProjectStatuses)
+        var providers = store.ProjectStatuses
+            .Select(s => s.Watched.Provider)
+            .Distinct()
+            .OrderBy(p => (int)p)
+            .ToList();
+        foreach (var provider in providers)
         {
-            var row = new DeploymentRowControl();
-            row.Bind(status, showProjectName: showNames);
-            StatusList.Children.Add(row);
+            if (providers.Count > 1)
+            {
+                StatusList.Children.Add(new TextBlock
+                {
+                    Text = provider.DisplayName(),
+                    FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
+                    Foreground = (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"],
+                    Margin = new Thickness(4, 6, 0, 0),
+                });
+            }
+
+            foreach (var status in store.ProjectStatuses.Where(s => s.Watched.Provider == provider))
+            {
+                var row = new DeploymentRowControl();
+                row.Bind(status, showProjectName: showNames);
+                StatusList.Children.Add(row);
+            }
         }
     }
 

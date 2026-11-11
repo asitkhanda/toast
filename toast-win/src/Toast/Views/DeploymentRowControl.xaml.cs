@@ -91,8 +91,24 @@ public sealed partial class DeploymentRowControl : UserControl
         ActionsRow.Visibility = Visibility.Visible;
         _previewUri = deployment.PreviewUrl;
         PreviewLink.Visibility = _previewUri is null ? Visibility.Collapsed : Visibility.Visible;
-        _dashboardUri = new Uri(
-            $"https://vercel.com/{status.Watched.TeamId}/{Uri.EscapeDataString(status.Watched.ProjectName)}/{deployment.Uid}");
+        _dashboardUri = DashboardUriFor(status.Watched, deployment);
+        DashboardLink.Content = $"{status.Watched.Provider.DisplayName()} dashboard";
+    }
+
+    private static Uri DashboardUriFor(WatchedProject watched, Deployment deployment)
+    {
+        if (watched.Provider == DeploymentProvider.Vercel)
+        {
+            return new Uri(
+                $"https://vercel.com/{watched.TeamId}/{Uri.EscapeDataString(watched.ProjectName)}/{deployment.Uid}");
+        }
+
+        var name = Uri.EscapeDataString(CloudflareProjectIds.NameOf(watched.ProjectId));
+        var isWorker = CloudflareProjectIds.TryParse(watched.ProjectId, out var kind, out _)
+            && kind == CloudflareProjectKind.Worker;
+        return isWorker
+            ? new Uri($"https://dash.cloudflare.com/{watched.TeamId}/workers/services/view/{name}/production")
+            : new Uri($"https://dash.cloudflare.com/{watched.TeamId}/pages/view/{name}/{deployment.Uid}");
     }
 
     private void ApplyStatusBadge(DeploymentState state)

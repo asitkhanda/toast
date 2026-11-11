@@ -8,12 +8,29 @@ namespace Toast.Views;
 public sealed partial class OnboardingPage : Page
 {
     private int _step;
+    private bool _ready;
+    private DeploymentProvider _provider = DeploymentProvider.Vercel;
     private List<WatchedProject> _selectedProjects = [];
 
     public OnboardingPage()
     {
         InitializeComponent();
+        _ready = true;
         Loaded += (_, _) => RefreshStep();
+    }
+
+    private void Provider_Checked(object sender, RoutedEventArgs e)
+    {
+        if (!_ready)
+        {
+            return;
+        }
+
+        _provider = CloudflareOption.IsChecked == true ? DeploymentProvider.Cloudflare : DeploymentProvider.Vercel;
+        TokenBox.Password = string.Empty;
+        ErrorText.Visibility = Visibility.Collapsed;
+        ScopeWarning.Visibility = Visibility.Collapsed;
+        RefreshStep();
     }
 
     private DeploymentStore Store => App.Store;
@@ -26,16 +43,16 @@ public sealed partial class OnboardingPage : Page
             if (_step == 0)
             {
                 PrimaryButton.IsEnabled = false;
-                await Store.ConnectAsync(TokenBox.Password);
+                await Store.ConnectAsync(TokenBox.Password, _provider);
                 TokenBox.Password = string.Empty;
-                if (!string.IsNullOrEmpty(Store.TokenScopeWarning))
+                if (Store.ScopeWarningFor(_provider) is { Length: > 0 } warning)
                 {
-                    ScopeWarning.Text = Store.TokenScopeWarning;
+                    ScopeWarning.Text = warning;
                     ScopeWarning.Visibility = Visibility.Visible;
                 }
 
                 _step = 1;
-                await Store.ReloadProjectsAsync();
+                await Store.ReloadProjectsAsync(_provider);
                 BindProjects();
             }
             else if (_step == 1)
@@ -80,8 +97,16 @@ public sealed partial class OnboardingPage : Page
     private void BindProjects()
     {
         ProjectList.Items.Clear();
-        var teamId = Store.SelectedTeamId ?? "";
-        foreach (var project in Store.Projects)
+        var teamId = Store.SelectedAccountIdFor(_provider) ?? "";
+        var projects = Store.ProjectsFor(_provider);
+        if (projects.Count == 0)
+        {
+            ErrorText.Text = Store.ProjectNoticeFor(_provider)
+                ?? $"No projects found. Check the token's permissions, or pick a different {_provider.AccountNoun().ToLowerInvariant()}.";
+            ErrorText.Visibility = Visibility.Visible;
+        }
+
+        foreach (var project in projects)
         {
             ProjectList.Items.Add(new ProjectPick
             {
@@ -107,6 +132,7 @@ public sealed partial class OnboardingPage : Page
                     ProjectId = pick.ProjectId,
                     ProjectName = pick.ProjectName,
                     TeamId = pick.TeamId,
+                    Provider = _provider,
                 });
             }
         }
@@ -117,6 +143,10 @@ public sealed partial class OnboardingPage : Page
     private void RefreshStep()
     {
         var onToken = _step == 0;
+        ProviderPanel.Visibility = onToken ? Visibility.Visible : Visibility.Collapsed;
+        TokenHelpText.Text = _provider.TokenAdvice();
+        TokenBox.PlaceholderText = _provider.TokenPlaceholder();
+        TokenHelpLink.NavigateUri = new Uri(_provider.TokensUrl());
         TokenHelpText.Visibility = onToken ? Visibility.Visible : Visibility.Collapsed;
         TokenBox.Visibility = onToken ? Visibility.Visible : Visibility.Collapsed;
         TokenHelpLink.Visibility = onToken ? Visibility.Visible : Visibility.Collapsed;
@@ -124,7 +154,7 @@ public sealed partial class OnboardingPage : Page
         BackgroundPanel.Visibility = _step == 2 ? Visibility.Visible : Visibility.Collapsed;
         StepTitle.Text = _step switch
         {
-            0 => "Connect your Vercel token",
+            0 => $"Connect your {_provider.DisplayName()} token",
             1 => "Pick projects to watch",
             _ => "Keep Toast running",
         };

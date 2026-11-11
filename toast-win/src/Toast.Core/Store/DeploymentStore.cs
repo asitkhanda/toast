@@ -46,9 +46,11 @@ public sealed class DeploymentStore : INotifyPropertyChanged
         public const string BackgroundBehaviorConfigured = "backgroundBehaviorConfigured";
         public const string SelectedTeamId = "selectedTeamId";
         public const string WatchedProjects = "watchedProjects";
+        public const string SelectedCloudflareAccountId = "selectedCloudflareAccountId";
     }
 
     private readonly ITokenStore _tokens;
+    private readonly ITokenStore _cloudflareTokens;
     private readonly IPreferencesStore _prefs;
     private readonly INotificationService _notifications;
     private readonly IAnalyticsService _analytics;
@@ -72,6 +74,15 @@ public sealed class DeploymentStore : INotifyPropertyChanged
     private DateTimeOffset? _lastRefresh;
     private bool _isConnected;
     private string? _connectedTeamName;
+    private List<Team> _cloudflareAccounts = [];
+    private List<Project> _cloudflareProjects = [];
+    private string? _selectedCloudflareAccountId;
+    private bool _isCloudflareConnected;
+    private string? _connectedCloudflareAccountName;
+    private string? _cloudflareScopeWarning;
+    private string? _cloudflareProjectNotice;
+    /// <summary>Worker name to script tag, keyed "accountId/name"; needed for Workers Builds.</summary>
+    private readonly Dictionary<string, string> _cloudflareWorkerTags = new();
     private CancellationTokenSource? _pollCts;
     private readonly Dictionary<string, DeploymentState> _previousStatuses = new();
     private readonly Dictionary<string, Deployment> _lastSuccessfulDeployments = new();
@@ -79,12 +90,14 @@ public sealed class DeploymentStore : INotifyPropertyChanged
 
     public DeploymentStore(
         ITokenStore tokens,
+        ITokenStore cloudflareTokens,
         IPreferencesStore prefs,
         INotificationService notifications,
         IAnalyticsService analytics,
         IBackgroundService background)
     {
         _tokens = tokens;
+        _cloudflareTokens = cloudflareTokens;
         _prefs = prefs;
         _notifications = notifications;
         _analytics = analytics;
@@ -207,11 +220,107 @@ public sealed class DeploymentStore : INotifyPropertyChanged
     public bool IsConnected => _isConnected;
     public string? ConnectedTeamName => _connectedTeamName;
 
+    public string? SelectedCloudflareAccountId
+    {
+        get => _selectedCloudflareAccountId;
+        set
+        {
+            if (!SetField(ref _selectedCloudflareAccountId, value))
+            {
+                return;
+            }
+
+            _prefs.SetString(Keys.SelectedCloudflareAccountId, value);
+            UpdateConnectedCloudflareAccountName();
+        }
+    }
+
+    public bool IsCloudflareConnected => _isCloudflareConnected;
+    public string? ConnectedCloudflareAccountName => _connectedCloudflareAccountName;
+    public string? CloudflareScopeWarning => _cloudflareScopeWarning;
+    public string? CloudflareProjectNotice => _cloudflareProjectNotice;
+
+    // Provider-generic accessors used by onboarding and Settings.
+
+    public IReadOnlyList<Team> AccountsFor(DeploymentProvider provider) =>
+        provider == DeploymentProvider.Vercel ? _teams : _cloudflareAccounts;
+
+    public IReadOnlyList<Project> ProjectsFor(DeploymentProvider provider) =>
+        provider == DeploymentProvider.Vercel ? _projects : _cloudflareProjects;
+
+    public string? SelectedAccountIdFor(DeploymentProvider provider) =>
+        provider == DeploymentProvider.Vercel ? _selectedTeamId : _selectedCloudflareAccountId;
+
+    public void SelectAccount(string? id, DeploymentProvider provider)
+    {
+        if (provider == DeploymentProvider.Vercel)
+        {
+            SelectedTeamId = id;
+        }
+        else
+        {
+            SelectedCloudflareAccountId = id;
+        }
+    }
+
+    public string? ConnectedAccountNameFor(DeploymentProvider provider) =>
+        provider == DeploymentProvider.Vercel ? _connectedTeamName : _connectedCloudflareAccountName;
+
+    public string? ScopeWarningFor(DeploymentProvider provider) =>
+        provider == DeploymentProvider.Vercel ? _tokenScopeWarning : _cloudflareScopeWarning;
+
+    public string? ProjectNoticeFor(DeploymentProvider provider) =>
+        provider == DeploymentProvider.Cloudflare ? _cloudflareProjectNotice : null;
+
+    public bool IsConnectedTo(DeploymentProvider provider) =>
+        provider == DeploymentProvider.Vercel ? _isConnected : _isCloudflareConnected;
+
+    public bool HasTokenFor(DeploymentProvider provider) =>
+        TokensFor(provider).HasToken();
+
+    private ITokenStore TokensFor(DeploymentProvider provider) =>
+        provider == DeploymentProvider.Vercel ? _tokens : _cloudflareTokens;
+
+    public Task ConnectAsync(string token, DeploymentProvider provider, CancellationToken ct = default) =>
+        provider == DeploymentProvider.Vercel ? ConnectAsync(token, ct) : ConnectCloudflareAsync(token, ct);
+
+    public void Disconnect(DeploymentProvider provider)
+    {
+        if (provider == DeploymentProvider.Vercel)
+        {
+            Disconnect();
+        }
+        else
+        {
+            DisconnectCloudflare();
+        }
+    }
+
+    public Task ReloadProjectsAsync(DeploymentProvider provider, CancellationToken ct = default) =>
+        provider == DeploymentProvider.Vercel ? ReloadProjectsAsync(ct) : ReloadCloudflareProjectsAsync(ct);
+
+    /// <summary>True when onboarding is done but a provider that Toast needs is not reachable.</summary>
+    private bool HasDisconnectedProvider
+    {
+        get
+        {
+            if (!_hasCompletedOnboarding)
+            {
+                return false;
+            }
+
+            var watched = _watchedProjects.Select(w => w.Provider).Distinct().ToList();
+            return watched.Count == 0
+                ? !_isConnected && !_isCloudflareConnected
+                : watched.Any(p => !IsConnectedTo(p));
+        }
+    }
+
     public AggregateStatus AggregateStatus
     {
         get
         {
-            if (!_isConnected && _hasCompletedOnboarding)
+            if (HasDisconnectedProvider)
             {
                 return AggregateStatus.Disconnected;
             }
@@ -242,9 +351,11 @@ public sealed class DeploymentStore : INotifyPropertyChanged
         ApplyDefaultBackgroundBehaviorIfNeeded();
         SyncBackgroundBehavior();
         _isConnected = _tokens.HasToken();
+        _isCloudflareConnected = _cloudflareTokens.HasToken();
         Notify(nameof(IsConnected));
+        Notify(nameof(IsCloudflareConnected));
 
-        if (_hasCompletedOnboarding && _tokens.HasToken())
+        if (_hasCompletedOnboarding && (_tokens.HasToken() || _cloudflareTokens.HasToken()))
         {
             _ = Task.Run(async () =>
             {
@@ -259,6 +370,12 @@ public sealed class DeploymentStore : INotifyPropertyChanged
     }
 
     public async Task RestoreSessionIfNeededAsync(CancellationToken ct = default)
+    {
+        await RestoreVercelSessionIfNeededAsync(ct);
+        await RestoreCloudflareSessionIfNeededAsync(ct);
+    }
+
+    private async Task RestoreVercelSessionIfNeededAsync(CancellationToken ct)
     {
         if (!_tokens.HasToken())
         {
@@ -307,6 +424,220 @@ public sealed class DeploymentStore : INotifyPropertyChanged
         }
     }
 
+    private async Task RestoreCloudflareSessionIfNeededAsync(CancellationToken ct)
+    {
+        if (!_cloudflareTokens.HasToken())
+        {
+            return;
+        }
+
+        if (_cloudflareAccounts.Count > 0 && _cloudflareProjects.Count > 0)
+        {
+            UpdateConnectedCloudflareAccountName();
+            SetCloudflareConnected(true);
+            return;
+        }
+
+        var client = MakeCloudflareClient();
+        if (client is null)
+        {
+            return;
+        }
+
+        try
+        {
+            _cloudflareAccounts = (await client.ListAccountsAsync(ct)).ToList();
+            Notify(nameof(CloudflareAccounts));
+            if (_selectedCloudflareAccountId is null)
+            {
+                SelectedCloudflareAccountId = _cloudflareAccounts.FirstOrDefault()?.Id;
+            }
+
+            UpdateConnectedCloudflareAccountName();
+            if (_selectedCloudflareAccountId is not null)
+            {
+                var listing = await client.ListProjectsWithNoticeAsync(_selectedCloudflareAccountId, ct);
+                SetCloudflareProjects(listing);
+            }
+
+            SetCloudflareConnected(true);
+            SetLastError(null);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            SetLastError(ex.Message);
+            if (ex is CloudflareApiException { Kind: CloudflareApiErrorKind.Unauthorized })
+            {
+                SetCloudflareConnected(false);
+            }
+        }
+    }
+
+    public IReadOnlyList<Team> CloudflareAccounts => _cloudflareAccounts;
+    public IReadOnlyList<Project> CloudflareProjects => _cloudflareProjects;
+
+    public async Task ConnectCloudflareAsync(string token, CancellationToken ct = default)
+    {
+        var cleaned = CloudflareApiClient.SanitizeToken(token);
+        if (string.IsNullOrEmpty(cleaned))
+        {
+            return;
+        }
+
+        SetLoading(true);
+        try
+        {
+            var client = new CloudflareApiClient(cleaned);
+            var validation = await client.ValidateTokenAsync(ct);
+            _cloudflareTokens.SaveToken(cleaned);
+            SetCloudflareConnected(true);
+            _cloudflareScopeWarning = validation.ScopeWarning;
+            Notify(nameof(CloudflareScopeWarning));
+            SetLastError(null);
+
+            _cloudflareAccounts = (await client.ListAccountsAsync(ct)).ToList();
+            Notify(nameof(CloudflareAccounts));
+            if (_selectedCloudflareAccountId is null
+                || _cloudflareAccounts.All(a => a.Id != _selectedCloudflareAccountId))
+            {
+                SelectedCloudflareAccountId = _cloudflareAccounts.FirstOrDefault()?.Id;
+            }
+
+            UpdateConnectedCloudflareAccountName();
+            if (_selectedCloudflareAccountId is not null)
+            {
+                var listing = await client.ListProjectsWithNoticeAsync(_selectedCloudflareAccountId, ct);
+                SetCloudflareProjects(listing);
+            }
+
+            _analytics.Capture("token_connected", new Dictionary<string, object> { ["provider"] = "cloudflare" });
+        }
+        finally
+        {
+            SetLoading(false);
+        }
+    }
+
+    public async Task ReloadCloudflareProjectsAsync(CancellationToken ct = default)
+    {
+        if (!_cloudflareTokens.HasToken())
+        {
+            SetCloudflareNotice("No Cloudflare token is saved. Add one first.");
+            return;
+        }
+
+        var client = MakeCloudflareClient();
+        if (client is null)
+        {
+            SetCloudflareNotice("Toast couldn't read the saved Cloudflare token. Replace it and try again.");
+            return;
+        }
+
+        if (_selectedCloudflareAccountId is null)
+        {
+            SetCloudflareNotice("Select a Cloudflare account first.");
+            return;
+        }
+
+        SetLoading(true);
+        try
+        {
+            var listing = await client.ListProjectsWithNoticeAsync(_selectedCloudflareAccountId, ct);
+            SetCloudflareProjects(listing);
+            SetLastError(null);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            SetCloudflareNotice(ex.Message);
+            SetLastError(ex.Message);
+        }
+        finally
+        {
+            SetLoading(false);
+        }
+    }
+
+    public void DisconnectCloudflare()
+    {
+        _cloudflareTokens.DeleteToken();
+        SetCloudflareConnected(false);
+        _connectedCloudflareAccountName = null;
+        _cloudflareAccounts = [];
+        _cloudflareProjects = [];
+        _cloudflareScopeWarning = null;
+        _cloudflareProjectNotice = null;
+        _cloudflareWorkerTags.Clear();
+        SelectedCloudflareAccountId = null;
+        Notify(nameof(ConnectedCloudflareAccountName));
+        Notify(nameof(CloudflareAccounts));
+        Notify(nameof(CloudflareProjects));
+        Notify(nameof(CloudflareScopeWarning));
+        Notify(nameof(CloudflareProjectNotice));
+        RemoveWatchedProjects(DeploymentProvider.Cloudflare);
+    }
+
+    /// <summary>Drops one provider's watched projects; returns to onboarding when nothing is left to watch.</summary>
+    private void RemoveWatchedProjects(DeploymentProvider provider)
+    {
+        var removed = _watchedProjects.Where(w => w.Provider == provider).Select(w => w.Id).ToHashSet();
+        _watchedProjects = _watchedProjects.Where(w => w.Provider != provider).ToList();
+        _projectStatuses = _projectStatuses.Where(s => !removed.Contains(s.Id)).ToList();
+        foreach (var id in removed)
+        {
+            _previousStatuses.Remove(id);
+            _lastSuccessfulDeployments.Remove(id);
+        }
+
+        SetLastError(null);
+        if (_watchedProjects.Count == 0)
+        {
+            StopPolling();
+            HasCompletedOnboarding = false;
+            _prefs.SetBool(Keys.OnboardingComplete, false);
+        }
+
+        Notify(nameof(ProjectStatuses));
+        Notify(nameof(WatchedProjects));
+        Notify(nameof(AggregateStatus));
+        PersistAllPreferences();
+    }
+
+    private void SetCloudflareProjects(CloudflareProjectListing listing)
+    {
+        _cloudflareProjects = listing.Projects.ToList();
+        _cloudflareProjectNotice = listing.Notice;
+        Notify(nameof(CloudflareProjects));
+        Notify(nameof(CloudflareProjectNotice));
+    }
+
+    private void SetCloudflareNotice(string? notice)
+    {
+        _cloudflareProjectNotice = notice;
+        Notify(nameof(CloudflareProjectNotice));
+    }
+
+    private void SetCloudflareConnected(bool value)
+    {
+        if (SetField(ref _isCloudflareConnected, value))
+        {
+            Notify(nameof(IsCloudflareConnected));
+            Notify(nameof(AggregateStatus));
+        }
+    }
+
+    private void UpdateConnectedCloudflareAccountName()
+    {
+        _connectedCloudflareAccountName = _cloudflareAccounts
+            .FirstOrDefault(a => a.Id == _selectedCloudflareAccountId)?.DisplayName;
+        Notify(nameof(ConnectedCloudflareAccountName));
+    }
+
+    private CloudflareApiClient? MakeCloudflareClient()
+    {
+        var token = _cloudflareTokens.LoadToken();
+        return token is null ? null : new CloudflareApiClient(token);
+    }
+
     public async Task ConnectAsync(string token, CancellationToken ct = default)
     {
         var trimmed = token.Trim();
@@ -350,28 +681,18 @@ public sealed class DeploymentStore : INotifyPropertyChanged
 
     public void Disconnect()
     {
-        StopPolling();
         _tokens.DeleteToken();
         SetConnected(false);
         _connectedTeamName = null;
-        Notify(nameof(ConnectedTeamName));
-        HasCompletedOnboarding = false;
-        _prefs.SetBool(Keys.OnboardingComplete, false);
         _teams = [];
         _projects = [];
-        _projectStatuses = [];
-        _watchedProjects = [];
-        _previousStatuses.Clear();
-        _lastSuccessfulDeployments.Clear();
         SelectedTeamId = null;
-        SetLastError(null);
         _tokenScopeWarning = null;
+        Notify(nameof(ConnectedTeamName));
         Notify(nameof(TokenScopeWarning));
         Notify(nameof(Teams));
         Notify(nameof(Projects));
-        Notify(nameof(ProjectStatuses));
-        Notify(nameof(WatchedProjects));
-        PersistAllPreferences();
+        RemoveWatchedProjects(DeploymentProvider.Vercel);
     }
 
     public async Task CompleteOnboardingAsync(
@@ -453,6 +774,10 @@ public sealed class DeploymentStore : INotifyPropertyChanged
         }
     }
 
+    /// <summary>Replaces the watched projects for one provider and leaves the others untouched.</summary>
+    public void UpdateWatchedProjects(IReadOnlyList<WatchedProject> selected, DeploymentProvider provider) =>
+        UpdateWatchedProjects(_watchedProjects.Where(w => w.Provider != provider).Concat(selected).ToList());
+
     public void UpdateWatchedProjects(IReadOnlyList<WatchedProject> selected)
     {
         _watchedProjects = selected.ToList();
@@ -518,17 +843,6 @@ public sealed class DeploymentStore : INotifyPropertyChanged
 
     private async Task RefreshAsync(double minIntervalSinceLastSuccess, CancellationToken ct)
     {
-        if (!_tokens.HasToken())
-        {
-            return;
-        }
-
-        var client = MakeApiClient();
-        if (client is null)
-        {
-            return;
-        }
-
         if (_watchedProjects.Count == 0)
         {
             _projectStatuses = [];
@@ -544,23 +858,23 @@ public sealed class DeploymentStore : INotifyPropertyChanged
             return;
         }
 
+        var vercel = MakeApiClient();
+        var cloudflare = MakeCloudflareClient();
+        await LoadMissingWorkerTagsAsync(cloudflare, ct);
+
         SetLoading(true);
         try
         {
             var results = new List<ProjectDeploymentStatus>();
             string? fetchError = null;
             Exception? pollError = null;
+            var failedProviders = new HashSet<DeploymentProvider>();
 
             foreach (var watched in _watchedProjects)
             {
                 try
                 {
-                    var deployments = await client.ListDeploymentsAsync(
-                        watched.ProjectId,
-                        watched.TeamId,
-                        limit: 1,
-                        ct);
-                    var deployment = deployments.FirstOrDefault();
+                    var deployment = await FetchLatestDeploymentAsync(watched, vercel, cloudflare, ct);
                     if (deployment is not null)
                     {
                         _lastSuccessfulDeployments[watched.Id] = deployment;
@@ -574,13 +888,14 @@ public sealed class DeploymentStore : INotifyPropertyChanged
                     });
                     await HandleStatusTransitionAsync(watched, deployment);
                 }
-                catch (Exception ex)
+                catch (Exception ex) when (ex is not OperationCanceledException)
                 {
                     fetchError = ex.Message;
                     pollError = ex;
-                    if (ex is VercelApiException { Kind: VercelApiErrorKind.Unauthorized })
+                    failedProviders.Add(watched.Provider);
+                    if (IsUnauthorized(ex))
                     {
-                        SetConnected(false);
+                        SetProviderConnected(watched.Provider, false);
                     }
 
                     results.Add(new ProjectDeploymentStatus
@@ -603,14 +918,96 @@ public sealed class DeploymentStore : INotifyPropertyChanged
             {
                 _analytics.CapturePollError(pollError);
             }
-            else if (fetchError is null)
+
+            foreach (var provider in _watchedProjects.Select(w => w.Provider).Distinct())
             {
-                SetConnected(true);
+                if (!failedProviders.Contains(provider))
+                {
+                    SetProviderConnected(provider, true);
+                }
             }
         }
         finally
         {
             SetLoading(false);
+        }
+    }
+
+    private async Task<Deployment?> FetchLatestDeploymentAsync(
+        WatchedProject watched,
+        VercelApiClient? vercel,
+        CloudflareApiClient? cloudflare,
+        CancellationToken ct)
+    {
+        if (watched.Provider == DeploymentProvider.Vercel)
+        {
+            if (vercel is null)
+            {
+                throw new VercelApiException(VercelApiErrorKind.Unauthorized, "Invalid or expired Vercel token. Reconnect in Settings.", 401);
+            }
+
+            var deployments = await vercel.ListDeploymentsAsync(watched.ProjectId, watched.TeamId, limit: 1, ct);
+            return deployments.FirstOrDefault();
+        }
+
+        if (cloudflare is null)
+        {
+            throw new CloudflareApiException(
+                CloudflareApiErrorKind.Unauthorized,
+                "Cloudflare didn't accept this token. Create a new token and replace it in Settings.",
+                401);
+        }
+
+        var name = CloudflareProjectIds.NameOf(watched.ProjectId);
+        _cloudflareWorkerTags.TryGetValue($"{watched.TeamId}/{name}", out var tag);
+        return await cloudflare.LatestDeploymentAsync(watched.TeamId, watched.ProjectId, tag, ct);
+    }
+
+    private async Task LoadMissingWorkerTagsAsync(CloudflareApiClient? client, CancellationToken ct)
+    {
+        if (client is null)
+        {
+            return;
+        }
+
+        var accounts = _watchedProjects
+            .Where(w => w.Provider == DeploymentProvider.Cloudflare
+                && CloudflareProjectIds.TryParse(w.ProjectId, out var kind, out var name)
+                && kind == CloudflareProjectKind.Worker
+                && !_cloudflareWorkerTags.ContainsKey($"{w.TeamId}/{name}"))
+            .Select(w => w.TeamId)
+            .Distinct()
+            .ToList();
+
+        foreach (var accountId in accounts)
+        {
+            try
+            {
+                // Best effort: without tags Workers fall back to deployment info.
+                foreach (var (name, tag) in await client.ListWorkerTagsAsync(accountId, ct))
+                {
+                    _cloudflareWorkerTags[$"{accountId}/{name}"] = tag;
+                }
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+            }
+        }
+    }
+
+    private static bool IsUnauthorized(Exception ex) =>
+        ex is VercelApiException { Kind: VercelApiErrorKind.Unauthorized }
+            or CloudflareApiException { Kind: CloudflareApiErrorKind.Unauthorized };
+
+    private void SetProviderConnected(DeploymentProvider provider, bool value)
+    {
+        if (provider == DeploymentProvider.Vercel)
+        {
+            SetConnected(value);
+        }
+        else
+        {
+            SetCloudflareConnected(value);
         }
     }
 
@@ -640,12 +1037,14 @@ public sealed class DeploymentStore : INotifyPropertyChanged
         switch (newStatus)
         {
             case DeploymentState.Ready:
-                title = $"{watched.ProjectName} deployed";
-                body = deployment.CommitMessage ?? "Deployment is ready.";
+                title = $"{watched.ProjectName} is live";
+                body = deployment.CommitMessage ?? "Your latest deployment finished successfully.";
                 break;
             case DeploymentState.Error:
-                title = $"{watched.ProjectName} failed";
-                body = deployment.CommitMessage ?? "Deployment failed.";
+                title = $"{watched.ProjectName} failed to deploy";
+                body = deployment.CommitMessage is { Length: > 0 } message
+                    ? $"{message} Open Toast for details."
+                    : "Open Toast to see what went wrong.";
                 break;
             default:
                 return;
@@ -672,6 +1071,7 @@ public sealed class DeploymentStore : INotifyPropertyChanged
             _runInBackgroundEnabled = _prefs.GetBool(Keys.RunInBackground, true);
             _relaunchOnCrashEnabled = _prefs.GetBool(Keys.RelaunchOnCrash, true);
             _selectedTeamId = _prefs.GetString(Keys.SelectedTeamId);
+            _selectedCloudflareAccountId = _prefs.GetString(Keys.SelectedCloudflareAccountId);
             _watchedProjects = _prefs.GetJson<List<WatchedProject>>(Keys.WatchedProjects) ?? [];
         }
         finally
@@ -685,6 +1085,7 @@ public sealed class DeploymentStore : INotifyPropertyChanged
         _prefs.SetBool(Keys.OnboardingComplete, _hasCompletedOnboarding);
         PersistWatchedProjects();
         PersistSelectedTeamId();
+        _prefs.SetString(Keys.SelectedCloudflareAccountId, _selectedCloudflareAccountId);
     }
 
     private void PersistWatchedProjects() =>

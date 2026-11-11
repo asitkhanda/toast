@@ -8,6 +8,8 @@ namespace Toast.Views;
 public sealed partial class SettingsPage : Page
 {
     private bool _loading = true;
+    private bool _binding;
+    private DeploymentProvider _provider = DeploymentProvider.Vercel;
 
     public SettingsPage()
     {
@@ -20,16 +22,50 @@ public sealed partial class SettingsPage : Page
         };
     }
 
+    private void Provider_Checked(object sender, RoutedEventArgs e)
+    {
+        if (_loading)
+        {
+            return;
+        }
+
+        _provider = CloudflareOption.IsChecked == true ? DeploymentProvider.Cloudflare : DeploymentProvider.Vercel;
+        TokenBox.Password = string.Empty;
+        ErrorText.Visibility = Visibility.Collapsed;
+        Bind();
+    }
+
     private void Bind()
     {
+        _binding = true;
+        try
+        {
+            BindCore();
+        }
+        finally
+        {
+            _binding = false;
+        }
+    }
+
+    private void BindCore()
+    {
         var store = App.Store;
-        ConnectionStatus.Text = store.IsConnected
-            ? $"Token saved in Credential Manager{(store.ConnectedTeamName is { } n ? $" · {n}" : "")}"
-            : "Not connected";
-        ScopeWarning.Text = store.TokenScopeWarning ?? "";
-        ScopeWarning.Visibility = string.IsNullOrEmpty(store.TokenScopeWarning)
-            ? Visibility.Collapsed
-            : Visibility.Visible;
+        var provider = _provider;
+        var hasToken = store.HasTokenFor(provider);
+        var accountName = store.ConnectedAccountNameFor(provider);
+        ConnectionStatus.Text = store.IsConnectedTo(provider)
+            ? $"Token saved in Credential Manager{(accountName is { } n ? $" · {n}" : "")}"
+            : hasToken
+                ? $"Toast can't reach {provider.DisplayName()} with the saved token. Replace it below."
+                : "Not connected";
+        TokenBox.PlaceholderText = hasToken
+            ? $"Replace {provider.DisplayName()} token"
+            : provider.TokenPlaceholder();
+
+        var warning = store.ScopeWarningFor(provider);
+        ScopeWarning.Text = warning ?? "";
+        ScopeWarning.Visibility = string.IsNullOrEmpty(warning) ? Visibility.Collapsed : Visibility.Visible;
 
         ShowStatusTextToggle.IsOn = store.ShowStatusText;
         NotificationsToggle.IsOn = store.NotificationsEnabled;
@@ -41,10 +77,24 @@ public sealed partial class SettingsPage : Page
             ? Visibility.Visible
             : Visibility.Collapsed;
 
+        var accounts = store.AccountsFor(provider);
+        AccountPicker.Header = provider.AccountNoun();
+        AccountPicker.ItemsSource = accounts.ToList();
+        AccountPicker.DisplayMemberPath = nameof(Team.DisplayName);
+        AccountPicker.SelectedItem = accounts.FirstOrDefault(a => a.Id == store.SelectedAccountIdFor(provider));
+        AccountPicker.Visibility = accounts.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
+
+        var notice = store.ProjectNoticeFor(provider);
+        ProjectNotice.Text = notice ?? "";
+        ProjectNotice.Visibility = string.IsNullOrEmpty(notice) ? Visibility.Collapsed : Visibility.Visible;
+
         ProjectList.Items.Clear();
-        var watched = store.WatchedProjects.Select(w => w.ProjectId).ToHashSet();
-        var teamId = store.SelectedTeamId ?? "";
-        foreach (var project in store.Projects)
+        var watched = store.WatchedProjects
+            .Where(w => w.Provider == provider)
+            .Select(w => w.ProjectId)
+            .ToHashSet();
+        var teamId = store.SelectedAccountIdFor(provider) ?? "";
+        foreach (var project in store.ProjectsFor(provider))
         {
             var item = new ProjectPick
             {
@@ -61,6 +111,24 @@ public sealed partial class SettingsPage : Page
         }
 
         ProjectList.DisplayMemberPath = nameof(ProjectPick.Display);
+    }
+
+    private async void AccountPicker_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_binding || _loading || AccountPicker.SelectedItem is not Team team)
+        {
+            return;
+        }
+
+        App.Store.SelectAccount(team.Id, _provider);
+        await App.Store.ReloadProjectsAsync(_provider);
+        Bind();
+    }
+
+    private async void ReloadProjects_Click(object sender, RoutedEventArgs e)
+    {
+        await App.Store.ReloadProjectsAsync(_provider);
+        Bind();
     }
 
     private void Back_Click(object sender, RoutedEventArgs e)
@@ -80,7 +148,7 @@ public sealed partial class SettingsPage : Page
         ErrorText.Visibility = Visibility.Collapsed;
         try
         {
-            await App.Store.ConnectAsync(TokenBox.Password);
+            await App.Store.ConnectAsync(TokenBox.Password, _provider);
             TokenBox.Password = string.Empty;
             Bind();
         }
@@ -93,8 +161,15 @@ public sealed partial class SettingsPage : Page
 
     private void Disconnect_Click(object sender, RoutedEventArgs e)
     {
-        App.Store.Disconnect();
-        (App.MainWindowInstance as MainWindow)?.NavigateToOnboarding();
+        App.Store.Disconnect(_provider);
+        if (App.Store.HasCompletedOnboarding)
+        {
+            Bind();
+        }
+        else
+        {
+            (App.MainWindowInstance as MainWindow)?.NavigateToOnboarding();
+        }
     }
 
     private void SaveProjects_Click(object sender, RoutedEventArgs e)
@@ -109,11 +184,12 @@ public sealed partial class SettingsPage : Page
                     ProjectId = pick.ProjectId,
                     ProjectName = pick.ProjectName,
                     TeamId = pick.TeamId,
+                    Provider = _provider,
                 });
             }
         }
 
-        App.Store.UpdateWatchedProjects(selected);
+        App.Store.UpdateWatchedProjects(selected, _provider);
     }
 
     private void Pref_Toggled(object sender, RoutedEventArgs e)
