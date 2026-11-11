@@ -1,24 +1,14 @@
 import Foundation
 
 enum RelativeDateFormat {
-    static func label(for date: Date, prefix: String) -> String {
-        let interval = Date().timeIntervalSince(date)
+    /// "Deployed 3 hours ago" — spelled out so it reads well on screen and in VoiceOver.
+    static func label(for date: Date, prefix: String, now: Date = Date()) -> String {
+        let interval = now.timeIntervalSince(date)
         if interval < 60 {
             return "\(prefix) just now"
         }
-        if interval < 3600 {
-            let minutes = Int(interval / 60)
-            return "\(prefix) \(minutes)m ago"
-        }
-        if interval < 86400 {
-            let formatter = DateFormatter()
-            formatter.timeStyle = .short
-            formatter.dateStyle = .none
-            return "\(prefix) \(formatter.string(from: date))"
-        }
-        let formatter = DateFormatter()
-        formatter.dateStyle = .short
-        formatter.timeStyle = .short
-        return "\(prefix) \(formatter.string(from: date))"
+        let formatter = RelativeDateTimeFormatter()
+        formatter.unitsStyle = .full
+        return "\(prefix) \(formatter.localizedString(for: date, relativeTo: now))"
     }
 }

@@ -14,37 +14,42 @@ struct FeedbackSheet: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Send Feedback")
+            Text("Send feedback")
                 .font(.title3.weight(.semibold))
+                .accessibilityAddTraits(.isHeader)
 
-            Text("Help us improve Toast. Diagnostics are included automatically.")
+            Text("Tell us what happened or what could be better. Anonymous diagnostics (app version, macOS version, error types) are included. Never your tokens or project names.")
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
 
             if !analyticsEnabled {
-                Label("Enable “Help improve Toast” in Settings to send feedback.", systemImage: "info.circle")
-                    .font(.caption)
-                    .foregroundStyle(.orange)
+                InlineNotice(
+                    kind: .info,
+                    title: "Feedback is turned off",
+                    message: "Turn on “Help improve Toast” in Settings → Privacy to send feedback."
+                )
             }
 
             TextField("What happened? (optional)", text: $message, axis: .vertical)
+                .accessibilityLabel("Your feedback")
                 .lineLimit(3...6)
                 .textFieldStyle(.roundedBorder)
                 .disabled(!analyticsEnabled)
 
             if didSend {
-                Label("Thanks — feedback sent.", systemImage: "checkmark.circle.fill")
-                    .font(.caption)
-                    .foregroundStyle(.green)
+                InlineNotice(kind: .success, title: "Thanks, your feedback was sent.")
             }
 
             HStack {
                 Button("Cancel", action: onDismiss)
+                    .keyboardShortcut(.cancelAction)
                 Spacer()
-                Button("Send") {
+                Button("Send feedback") {
                     sendFeedback()
                 }
+                .toastButtonStyle(prominent: true)
+                .keyboardShortcut(.defaultAction)
                 .disabled(!analyticsEnabled || didSend)
             }
         }

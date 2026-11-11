@@ -7,6 +7,7 @@ struct MenuBarPopover: View {
     @Environment(\.openSettings) private var openSettings
 
     @State private var showFeedbackSheet = false
+    @State private var selectedProvider: DeploymentProvider?
 
     var body: some View {
         Group {
@@ -24,187 +25,245 @@ struct MenuBarPopover: View {
                 }
             }
         }
-        .frame(width: 380)
+        .frame(width: Theme.popoverWidth)
         .task {
             await store.refreshNow()
         }
     }
 
+    // MARK: Header
+
     private var header: some View {
-        HStack(alignment: .top) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(headerTitle)
-                    .font(.headline)
-                headerSubtitle
-            }
-            Spacer()
-            statusIcon
-        }
-        .padding()
-    }
-
-    private var headerTitle: String {
-        let count = store.watchedProjects.count
-        if count == 1, let name = store.watchedProjects.first?.projectName {
-            return name
-        }
-        if count > 1 {
-            return "\(count) projects"
-        }
-        return "No projects"
-    }
-
-    @ViewBuilder
-    private var headerSubtitle: some View {
-        if store.isLoading, store.projectStatuses.isEmpty {
-            Text("Fetching deployments…")
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-        } else if store.projectStatuses.count == 1, let status = store.projectStatuses.first {
-            singleProjectHeaderTimestamps(status)
-        } else if let lastRefresh = store.lastRefresh {
-            Text(RelativeDateFormat.label(for: lastRefresh, prefix: "Checked"))
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-        }
-    }
-
-    @ViewBuilder
-    private func singleProjectHeaderTimestamps(_ status: ProjectDeploymentStatus) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
-            if let deployed = status.deployment?.deployedDate {
-                Text(RelativeDateFormat.label(for: deployed, prefix: "Deployed"))
-                    .font(.caption2)
+        HStack(alignment: .center, spacing: 12) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text(store.summary.headline)
+                    .font(.title3.weight(.semibold))
+                Text(headerSubtitle)
+                    .font(.footnote)
                     .foregroundStyle(.secondary)
             }
-            Text(RelativeDateFormat.label(for: status.fetchedAt, prefix: "Checked"))
-                .font(.caption2)
-                .foregroundStyle(.tertiary)
+            Spacer()
+            headerIcon
         }
+        .padding(16)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(store.summary.headline). \(headerSubtitle)")
+        .accessibilityAddTraits(.isHeader)
+    }
+
+    private var headerSubtitle: String {
+        if store.isLoading && store.projectStatuses.isEmpty {
+            return "Checking your deployments…"
+        }
+        if let lastRefresh = store.lastRefresh {
+            return RelativeDateFormat.label(for: lastRefresh, prefix: "Checked")
+        }
+        return "Toast checks every minute, and every 5 seconds while something builds."
     }
 
     @ViewBuilder
-    private var statusIcon: some View {
+    private var headerIcon: some View {
         if store.isLoading {
             ProgressView()
                 .controlSize(.small)
+                .accessibilityLabel("Refreshing")
         } else {
-            switch store.aggregateStatus {
-            case .ready:
-                Image(systemName: "checkmark.circle.fill")
-                    .foregroundStyle(.green)
-            case .building:
-                ProgressView()
-                    .controlSize(.small)
-            case .error:
-                Image(systemName: "xmark.circle.fill")
-                    .foregroundStyle(.red)
-            case .disconnected:
-                Image(systemName: "exclamationmark.triangle.fill")
-                    .foregroundStyle(.orange)
-            case .idle:
-                EmptyView()
-            }
+            let status = store.aggregateStatus
+            Image(systemName: status.menuBarSymbol)
+                .font(.title2)
+                .foregroundStyle(status.tint)
+                .accessibilityHidden(true)
         }
     }
+
+    // MARK: Content
 
     @ViewBuilder
     private var content: some View {
-        if store.watchedProjects.isEmpty {
-            emptyState(
-                title: "No projects watched",
-                actionTitle: "Choose projects…"
-            )
-        } else if store.projectStatuses.isEmpty {
-            VStack(spacing: 8) {
-                ProgressView()
-                Text("Loading deployments…")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+        VStack(alignment: .leading, spacing: 10) {
+            if let failure = store.lastFailure {
+                InlineNotice(
+                    kind: .error,
+                    title: failure.title,
+                    message: failure.message,
+                    actionTitle: actionTitle(for: failure),
+                    action: action(for: failure)
+                )
+                .padding(.horizontal, 12)
+                .padding(.top, 12)
             }
-            .frame(maxWidth: .infinity, minHeight: 80)
-            .padding(24)
-        } else if store.projectStatuses.count == 1, let status = store.projectStatuses.first {
-            // Single project: details live in header; show metadata below
-            singleProjectContent(status)
-        } else {
-            multiProjectContent
-        }
 
-        if let error = store.lastError {
-            Text(error)
-                .font(.caption)
-                .foregroundStyle(.red)
-                .padding(.horizontal)
-                .padding(.bottom, 8)
-        }
-    }
-
-    @ViewBuilder
-    private func singleProjectContent(_ status: ProjectDeploymentStatus) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
-            DeploymentRow(status: status, showProjectName: false)
-                .padding(.horizontal)
-        }
-        .frame(maxWidth: .infinity, minHeight: 80, alignment: .topLeading)
-    }
-
-    private var multiProjectContent: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
-                ForEach(store.projectStatuses) { status in
-                    DeploymentRow(status: status)
-                        .padding(.horizontal)
-                    if status.id != store.projectStatuses.last?.id {
-                        Divider()
-                            .padding(.leading)
-                    }
-                }
+            if store.watchedProjects.isEmpty {
+                emptyState
+            } else if store.projectStatuses.isEmpty {
+                loadingState
+            } else {
+                projectList
             }
-            .padding(.vertical, 4)
         }
-        .frame(
-            minHeight: min(CGFloat(store.projectStatuses.count) * 110, 330),
-            maxHeight: 420
-        )
     }
 
-    private func emptyState(title: String, actionTitle: String) -> some View {
-        VStack(spacing: 8) {
-            Text(title)
+    private var emptyState: some View {
+        VStack(spacing: 10) {
+            Image(systemName: "tray")
+                .font(.largeTitle)
                 .foregroundStyle(.secondary)
-            Button(actionTitle) {
+                .accessibilityHidden(true)
+            Text("Choose what to watch")
+                .font(.headline)
+            Text("Pick the projects you want Toast to keep an eye on. Their status will appear here.")
+                .font(.callout)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+            Button("Choose projects…") {
                 AppActivation.openSettings(openSettings)
             }
+            .toastButtonStyle(prominent: true)
+            .controlSize(.large)
         }
-        .frame(maxWidth: .infinity, minHeight: 80)
+        .frame(maxWidth: .infinity)
         .padding(24)
     }
 
-    private var footer: some View {
-        HStack {
-            Button("Refresh") {
-                Task { await store.refreshNow() }
-            }
-            Button("Settings…") {
-                AppActivation.openSettings(openSettings)
-            }
-            if updater.supportsManualUpdates {
-                Button("Check for Updates…") {
-                    updater.checkForUpdates()
-                }
-            }
-            Button("Send Feedback…") {
-                showFeedbackSheet = true
-            }
-            Spacer()
-            Button("Quit") {
-                BackgroundBehavior.markUserQuit()
-                NSApplication.shared.terminate(nil)
-            }
+    private var loadingState: some View {
+        VStack(spacing: 8) {
+            ProgressView()
+            Text("Checking your deployments…")
+                .font(.callout)
+                .foregroundStyle(.secondary)
         }
-        .buttonStyle(.plain)
-        .font(.caption)
-        .padding(10)
+        .frame(maxWidth: .infinity, minHeight: 100)
+        .padding(24)
+    }
+
+    private var providerGroups: [(provider: DeploymentProvider, statuses: [ProjectDeploymentStatus])] {
+        DeploymentProvider.allCases.compactMap { provider in
+            let statuses = store.projectStatuses.filter { $0.watched.provider == provider }
+            return statuses.isEmpty ? nil : (provider, statuses)
+        }
+    }
+
+    private var activeProvider: DeploymentProvider {
+        if let selectedProvider, providerGroups.contains(where: { $0.provider == selectedProvider }) {
+            return selectedProvider
+        }
+        // Open on the first service that has a problem, otherwise the first one.
+        let withProblem = providerGroups.first { group in
+            group.statuses.contains { $0.status == .error || $0.status == .blocked }
+        }
+        return (withProblem ?? providerGroups.first)?.provider ?? .vercel
+    }
+
+    private var projectList: some View {
+        let groups = providerGroups
+        let active = activeProvider
+        let visible = groups.first { $0.provider == active }?.statuses ?? []
+        return VStack(alignment: .leading, spacing: 0) {
+            if groups.count > 1 {
+                Picker("Service", selection: Binding(
+                    get: { active },
+                    set: { selectedProvider = $0 }
+                )) {
+                    ForEach(groups, id: \.provider) { group in
+                        Text("\(group.provider.displayName) (\(group.statuses.count))")
+                            .tag(group.provider)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+                .accessibilityLabel("Service")
+                .padding(.horizontal, 16)
+                .padding(.top, 12)
+                .padding(.bottom, 4)
+            }
+
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    ForEach(visible) { status in
+                        DeploymentRow(status: status)
+                        if status.id != visible.last?.id {
+                            Divider()
+                        }
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 6)
+            }
+            .frame(
+                minHeight: min(CGFloat(visible.count) * 130, 300),
+                maxHeight: 400
+            )
+        }
+    }
+
+    // MARK: Errors
+
+    private func actionTitle(for failure: UserFacingError) -> String? {
+        switch failure.action {
+        case .replaceToken: "Fix in Settings"
+        case .openSettings: "Open Settings"
+        case .retry: "Try again"
+        case nil: nil
+        }
+    }
+
+    private func action(for failure: UserFacingError) -> (() -> Void)? {
+        switch failure.action {
+        case .replaceToken, .openSettings:
+            return { AppActivation.openSettings(openSettings) }
+        case .retry:
+            return { Task { await store.refreshNow() } }
+        case nil:
+            return nil
+        }
+    }
+
+    // MARK: Footer
+
+    private var footer: some View {
+        HStack(spacing: 8) {
+            Button {
+                Task { await store.refreshNow() }
+            } label: {
+                Label("Refresh", systemImage: "arrow.clockwise")
+            }
+            .help("Check your deployments now")
+            .keyboardShortcut("r")
+            .toastButtonStyle()
+
+            Button {
+                AppActivation.openSettings(openSettings)
+            } label: {
+                Label("Settings", systemImage: "gearshape")
+            }
+            .help("Accounts, projects and preferences")
+            .keyboardShortcut(",")
+            .toastButtonStyle()
+
+            Spacer()
+
+            Menu {
+                if updater.supportsManualUpdates {
+                    Button("Check for Updates…") { updater.checkForUpdates() }
+                }
+                Button("Send Feedback…") { showFeedbackSheet = true }
+                Divider()
+                Button("Quit Toast") {
+                    BackgroundBehavior.markUserQuit()
+                    NSApplication.shared.terminate(nil)
+                }
+                .keyboardShortcut("q")
+            } label: {
+                Label("More", systemImage: "ellipsis")
+            }
+            .menuIndicator(.hidden)
+            .toastButtonStyle()
+            .fixedSize()
+            .help("Updates, feedback and quit")
+        }
+        .labelStyle(.titleAndIcon)
+        .controlSize(.regular)
+        .padding(12)
     }
 }

@@ -52,6 +52,9 @@ struct MenuBarLabel: View {
                     .font(.system(size: 11, weight: .semibold, design: .rounded))
             }
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(store.summary.spoken)
+        .help(store.summary.headline)
         .task {
             if updater.supportsManualUpdates {
                 updater.startIfNeeded()

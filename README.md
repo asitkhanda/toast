@@ -1,6 +1,6 @@
 # Toast
 
-A lightweight **menu bar (macOS)** and **system tray (Windows)** app for live Vercel deployment status.
+A lightweight **menu bar (macOS)** and **system tray (Windows)** app for live Vercel deployment status. The macOS app also watches **Cloudflare Pages and Workers** (Windows support is planned).
 
 | Platform | Install | Auto-update |
 |----------|---------|-------------|
@@ -178,6 +178,17 @@ The Release workflow bumps `Casks/toast-app.rb` automatically using
 `HOMEBREW_TAP_TOKEN`. If the tap repository is private or under a different
 account, configure the token with matching write access and update `TAP_REPO`
 in the workflow.
+
+## Cloudflare Pages and Workers (macOS)
+
+Connect Cloudflare in onboarding or **Settings** next to Vercel. Create a custom API token at [dash.cloudflare.com/profile/api-tokens](https://dash.cloudflare.com/profile/api-tokens) with only:
+
+- **Account → Cloudflare Pages → Read** (for Pages projects)
+- **Account → Workers Scripts → Read** (for Workers)
+- **Account → Workers Builds Configuration → Read** (optional, for real Workers build progress)
+- **Account → Account Settings → Read**
+
+Toast stores it in the Keychain (`cloudflare-api-token`) and lists your Pages projects and Workers in one section of the popover. Pages show real build progress (queued, initialize, clone, build, deploy). Git-connected Workers show real build status through Workers Builds (queued, building, failed, success, with branch and commit) when the token has Workers Builds Configuration → Read. Without it, or for Workers deployed by hand, Toast falls back to the latest deployment time and shows Ready.
 
 ## Analytics
 

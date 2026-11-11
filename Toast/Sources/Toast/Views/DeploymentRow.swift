@@ -2,134 +2,138 @@ import SwiftUI
 
 struct DeploymentRow: View {
     let status: ProjectDeploymentStatus
-    let showProjectName: Bool
-
-    init(status: ProjectDeploymentStatus, showProjectName: Bool = true) {
-        self.status = status
-        self.showProjectName = showProjectName
-    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 4) {
-                    if showProjectName {
-                        Text(status.watched.projectName)
-                            .font(.headline)
-                    }
-                    timestampLine
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                    Text(status.watched.projectName)
+                        .font(.headline)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                    Spacer(minLength: 8)
+                    StatusPill(state: status.status)
                 }
-                Spacer()
-                if showProjectName {
-                    StatusBadge(state: status.status)
+
+                timestampLine
+
+                if let deployment = status.deployment {
+                    detailLine(deployment)
+                    if let message = deployment.commitMessage {
+                        Text(message)
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(2)
+                    }
                 }
             }
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel(spokenSummary)
 
             if let deployment = status.deployment {
-                HStack(spacing: 8) {
-                    if deployment.isProduction {
-                        Tag(text: "Production", color: .purple)
-                    }
-                    if let branch = deployment.branch {
-                        Tag(text: branch, color: .secondary)
-                    }
-                    if let sha = deployment.commitSHA {
-                        Text(sha)
-                            .font(.caption.monospaced())
-                            .foregroundStyle(.secondary)
-                    }
-                }
-
-                if let message = deployment.commitMessage {
-                    Text(message)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(2)
-                }
-
-                HStack(spacing: 12) {
+                HStack(spacing: 14) {
                     if let url = deployment.previewURL {
-                        Link("Open preview", destination: url)
-                            .font(.caption)
+                        Link("Open site", destination: url)
+                            .help("Open the deployed site in your browser")
                     }
-                    Link(
-                        "Vercel dashboard",
-                        destination: dashboardURL(for: status.watched, deployment: deployment)
-                    )
-                    .font(.caption)
+                    Link("View in \(status.watched.provider.displayName)", destination: dashboardURL(for: status.watched, deployment: deployment))
+                        .help("Open this deployment in the \(status.watched.provider.displayName) dashboard")
                 }
-            } else {
-                Text("No deployment data")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                .font(.callout)
             }
         }
-        .padding(.vertical, 10)
+        .padding(.vertical, 12)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     @ViewBuilder
     private var timestampLine: some View {
-        if showProjectName {
-            VStack(alignment: .leading, spacing: 2) {
-                if let deployment = status.deployment, let deployed = deployment.deployedDate {
-                    Text(RelativeDateFormat.label(for: deployed, prefix: "Deployed"))
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                } else if status.deployment == nil {
-                    Text("No deployment yet")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                }
-                Text(RelativeDateFormat.label(for: status.fetchedAt, prefix: "Checked"))
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
-                if status.isStale {
-                    Text("Showing last known data")
-                        .font(.caption2)
-                        .foregroundStyle(.orange)
-                }
+        VStack(alignment: .leading, spacing: 2) {
+            if let deployed = status.deployment?.deployedDate {
+                Text(RelativeDateFormat.label(for: deployed, prefix: status.status.isInProgress ? "Started" : "Deployed"))
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            } else {
+                Text("No deployments yet. Push a commit and it will show up here.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
+            if status.isStale {
+                Label("Couldn't refresh. Showing the last known status.", systemImage: "exclamationmark.triangle.fill")
+                    .font(.footnote)
+                    .foregroundStyle(.primary)
+                    .symbolRenderingMode(.multicolor)
             }
         }
     }
 
+    private func detailLine(_ deployment: Deployment) -> some View {
+        HStack(spacing: 8) {
+            if deployment.isProduction {
+                MetaChip(text: "Production", symbol: "shield.fill")
+            }
+            if let branch = deployment.branch {
+                MetaChip(text: branch, symbol: "arrow.triangle.branch")
+            }
+            if let sha = deployment.commitSHA {
+                Text(sha)
+                    .font(.footnote.monospaced())
+                    .foregroundStyle(.secondary)
+            }
+            if status.status == .ready, let seconds = deployment.durationSeconds, seconds > 0 {
+                Text("Built in \(Self.format(duration: seconds))")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    private var spokenSummary: String {
+        var parts = ["\(status.watched.projectName), \(status.status.spokenName)"]
+        if let deployed = status.deployment?.deployedDate {
+            parts.append(RelativeDateFormat.label(for: deployed, prefix: status.status.isInProgress ? "started" : "deployed"))
+        }
+        if let branch = status.deployment?.branch { parts.append("branch \(branch)") }
+        if let message = status.deployment?.commitMessage { parts.append(message) }
+        if status.isStale { parts.append("could not refresh, showing last known status") }
+        return parts.joined(separator: ", ")
+    }
+
+    static func format(duration seconds: TimeInterval) -> String {
+        let total = Int(seconds.rounded())
+        if total < 60 { return "\(total)s" }
+        return "\(total / 60)m \(total % 60)s"
+    }
+
     private func dashboardURL(for watched: WatchedProject, deployment: Deployment) -> URL {
-        URL(string: "https://vercel.com/\(watched.teamId)/\(watched.projectName)/\(deployment.uid)")!
-    }
-}
-
-struct StatusBadge: View {
-    let state: DeploymentState
-
-    var body: some View {
-        Text(state.displayName)
-            .font(.caption.weight(.semibold))
-            .padding(.horizontal, 8)
-            .padding(.vertical, 3)
-            .background(backgroundColor.opacity(0.15))
-            .foregroundStyle(backgroundColor)
-            .clipShape(Capsule())
-    }
-
-    private var backgroundColor: Color {
-        switch state {
-        case .ready: .green
-        case .building, .initializing, .queued: .blue
-        case .error, .canceled, .blocked: .red
+        switch watched.provider {
+        case .vercel:
+            return URL(string: "https://vercel.com/\(watched.teamId)/\(watched.projectName)/\(deployment.uid)")!
+        case .cloudflare:
+            let name = CloudflareProjectKind.name(fromProjectID: watched.projectId)
+            switch CloudflareProjectKind(projectID: watched.projectId) ?? .pages {
+            case .pages:
+                return URL(string: "https://dash.cloudflare.com/\(watched.teamId)/pages/view/\(name)/\(deployment.uid)")!
+            case .worker:
+                return URL(string: "https://dash.cloudflare.com/\(watched.teamId)/workers/services/view/\(name)/production")!
+            }
         }
     }
 }
 
-struct Tag: View {
+struct MetaChip: View {
     let text: String
-    let color: Color
+    let symbol: String
 
     var body: some View {
-        Text(text)
-            .font(.caption2.weight(.medium))
-            .padding(.horizontal, 6)
-            .padding(.vertical, 2)
-            .background(color.opacity(0.12))
-            .foregroundStyle(color == .secondary ? Color.secondary : color)
-            .clipShape(Capsule())
+        HStack(spacing: 4) {
+            Image(systemName: symbol)
+                .imageScale(.small)
+                .foregroundStyle(.secondary)
+            Text(text)
+                .font(.footnote.weight(.medium))
+                .foregroundStyle(.primary)
+                .lineLimit(1)
+        }
     }
 }

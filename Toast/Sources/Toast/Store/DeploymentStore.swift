@@ -1,5 +1,6 @@
 import Foundation
 import Observation
+import SwiftUI
 import UserNotifications
 
 struct BackgroundPreferences: Sendable {
@@ -41,6 +42,16 @@ enum AggregateStatus: Sendable {
         case .ready: "checkmark.circle.fill"
         case .error: "xmark.circle.fill"
         case .disconnected: "exclamationmark.triangle.fill"
+        }
+    }
+
+    var tint: Color {
+        switch self {
+        case .idle: .secondary
+        case .building: .blue
+        case .ready: .green
+        case .error: .red
+        case .disconnected: .orange
         }
     }
 
@@ -92,7 +103,14 @@ final class DeploymentStore {
             persistSelectedTeamId()
         }
     }
+    var selectedCloudflareAccountId: String? = nil {
+        didSet {
+            persistSelectedCloudflareAccountId()
+        }
+    }
     var watchedProjects: [WatchedProject] = []
+    /// Shows the "You're all set" screen once, right after onboarding finishes.
+    var showSetupComplete = false
 
     private(set) var teams: [Team] = []
     private(set) var projects: [Project] = []
@@ -100,13 +118,25 @@ final class DeploymentStore {
     private(set) var isLoading = false
     private(set) var isFinishingOnboarding = false
     private(set) var lastError: String?
+    /// The same problem as `lastError`, in plain language with a suggested next step.
+    private(set) var lastFailure: UserFacingError?
     private(set) var tokenScopeWarning: String?
     private(set) var lastRefresh: Date?
     private(set) var isConnected = false
     private(set) var connectedTeamName: String?
+    private(set) var cloudflareAccounts: [Team] = []
+    private(set) var cloudflareProjects: [Project] = []
+    private(set) var isCloudflareConnected = false
+    private(set) var connectedCloudflareAccountName: String?
+    private(set) var cloudflareScopeWarning: String?
+    private(set) var cloudflareProjectNotice: String?
+
+    var summary: StatusSummary {
+        StatusSummary.make(states: projectStatuses.map(\.status), isDisconnected: hasDisconnectedProvider)
+    }
 
     var aggregateStatus: AggregateStatus {
-        if !isConnected && hasCompletedOnboarding {
+        if hasDisconnectedProvider {
             return .disconnected
         }
         let statuses = projectStatuses.map(\.status)
@@ -122,7 +152,95 @@ final class DeploymentStore {
         return .idle
     }
 
+    // MARK: Provider-generic accessors used by onboarding and Settings
+
+    func accounts(for provider: DeploymentProvider) -> [Team] {
+        provider == .vercel ? teams : cloudflareAccounts
+    }
+
+    func projects(for provider: DeploymentProvider) -> [Project] {
+        provider == .vercel ? projects : cloudflareProjects
+    }
+
+    func selectedAccountId(for provider: DeploymentProvider) -> String? {
+        provider == .vercel ? selectedTeamId : selectedCloudflareAccountId
+    }
+
+    func selectAccount(_ id: String?, for provider: DeploymentProvider) {
+        if provider == .vercel {
+            selectedTeamId = id
+        } else {
+            selectedCloudflareAccountId = id
+        }
+    }
+
+    func connectedAccountName(for provider: DeploymentProvider) -> String? {
+        provider == .vercel ? connectedTeamName : connectedCloudflareAccountName
+    }
+
+    func projectNotice(for provider: DeploymentProvider) -> String? {
+        provider == .cloudflare ? cloudflareProjectNotice : nil
+    }
+
+    func scopeWarning(for provider: DeploymentProvider) -> String? {
+        provider == .vercel ? tokenScopeWarning : cloudflareScopeWarning
+    }
+
+    func connect(token: String, provider: DeploymentProvider) async throws {
+        switch provider {
+        case .vercel: try await connect(token: token)
+        case .cloudflare: try await connectCloudflare(token: token)
+        }
+    }
+
+    /// Makes a quick read-only call to confirm the saved token still works.
+    func testConnection(_ provider: DeploymentProvider) async throws {
+        switch provider {
+        case .vercel:
+            guard let client = makeAPIClient() else { throw VercelAPIError.unauthorized }
+            _ = try await client.listTeams()
+            isConnected = true
+        case .cloudflare:
+            guard let client = makeCloudflareClient() else { throw CloudflareAPIError.unauthorized }
+            _ = try await client.listAccounts()
+            isCloudflareConnected = true
+        }
+    }
+
+    func disconnect(provider: DeploymentProvider) {
+        switch provider {
+        case .vercel: disconnect()
+        case .cloudflare: disconnectCloudflare()
+        }
+    }
+
+    func reloadProjects(for provider: DeploymentProvider) async {
+        switch provider {
+        case .vercel: await reloadProjects()
+        case .cloudflare: await reloadCloudflareProjects()
+        }
+    }
+
+    func isConnected(to provider: DeploymentProvider) -> Bool {
+        switch provider {
+        case .vercel: isConnected
+        case .cloudflare: isCloudflareConnected
+        }
+    }
+
+    /// True when onboarding is done but a provider that Toast needs is not reachable.
+    private var hasDisconnectedProvider: Bool {
+        guard hasCompletedOnboarding else { return false }
+        let watchedProviders = Set(watchedProjects.map(\.provider))
+        if watchedProviders.isEmpty {
+            return !isConnected && !isCloudflareConnected
+        }
+        return watchedProviders.contains { !isConnected(to: $0) }
+    }
+
     private var pollTask: Task<Void, Never>?
+    /// Worker name → script tag, keyed "<accountId>/<name>"; needed for Workers Builds.
+    private var cloudflareWorkerTags: [String: String] = [:]
     private var previousStatuses: [String: DeploymentState] = [:]
     private var lastSuccessfulDeployments: [String: Deployment] = [:]
     private var isLoadingPreferences = false
@@ -130,6 +248,11 @@ final class DeploymentStore {
     private func makeAPIClient() -> VercelAPIClient? {
         guard let token = KeychainStore.loadToken() else { return nil }
         return VercelAPIClient(token: token)
+    }
+
+    private func makeCloudflareClient() -> CloudflareAPIClient? {
+        guard let token = KeychainStore.loadToken(for: .cloudflare) else { return nil }
+        return CloudflareAPIClient(token: token)
     }
 
     private enum Keys {
@@ -142,6 +265,7 @@ final class DeploymentStore {
         static let backgroundBehaviorConfigured = "backgroundBehaviorConfigured"
         static let selectedTeamId = "selectedTeamId"
         static let watchedProjects = "watchedProjects"
+        static let selectedCloudflareAccountId = "selectedCloudflareAccountId"
     }
 
     init() {
@@ -153,8 +277,9 @@ final class DeploymentStore {
         applyDefaultBackgroundBehaviorIfNeeded()
         syncBackgroundBehavior()
         isConnected = KeychainStore.hasToken()
+        isCloudflareConnected = KeychainStore.hasToken(for: .cloudflare)
 
-        if hasCompletedOnboarding, KeychainStore.hasToken() {
+        if hasCompletedOnboarding, isConnected || isCloudflareConnected {
             Task {
                 await restoreSessionIfNeeded()
                 startPolling()
@@ -166,6 +291,11 @@ final class DeploymentStore {
 
     /// Reloads teams and projects from the saved token (e.g. after app restart or opening Settings).
     func restoreSessionIfNeeded() async {
+        await restoreVercelSessionIfNeeded()
+        await restoreCloudflareSessionIfNeeded()
+    }
+
+    private func restoreVercelSessionIfNeeded() async {
         guard KeychainStore.hasToken() else { return }
 
         guard teams.isEmpty || projects.isEmpty else {
@@ -187,13 +317,129 @@ final class DeploymentStore {
                 projects = try await client.listProjects(teamId: teamId)
             }
             isConnected = true
-            lastError = nil
+            clearFailure()
         } catch {
-            lastError = error.localizedDescription
+            record(error)
             if case VercelAPIError.unauthorized = error {
                 isConnected = false
             }
         }
+    }
+
+    private func restoreCloudflareSessionIfNeeded() async {
+        guard KeychainStore.hasToken(for: .cloudflare) else { return }
+
+        guard cloudflareAccounts.isEmpty || cloudflareProjects.isEmpty else {
+            updateConnectedCloudflareAccountName()
+            isCloudflareConnected = true
+            return
+        }
+
+        guard let client = makeCloudflareClient() else { return }
+
+        do {
+            cloudflareAccounts = try await client.listAccounts()
+            if selectedCloudflareAccountId == nil {
+                selectedCloudflareAccountId = cloudflareAccounts.first?.id
+            }
+            updateConnectedCloudflareAccountName()
+            if let accountId = selectedCloudflareAccountId {
+                let listing = try await client.listProjectsWithNotice(accountId: accountId)
+                cloudflareProjects = listing.projects
+                cloudflareProjectNotice = listing.notice
+            }
+            isCloudflareConnected = true
+            clearFailure()
+        } catch {
+            record(error)
+            if case CloudflareAPIError.unauthorized = error {
+                isCloudflareConnected = false
+            }
+        }
+    }
+
+    func connectCloudflare(token: String) async throws {
+        let trimmed = CloudflareAPIClient.sanitizedToken(token)
+        guard !trimmed.isEmpty else { return }
+
+        isLoading = true
+        defer { isLoading = false }
+
+        let client = CloudflareAPIClient(token: trimmed)
+        let validation = try await client.validateToken()
+        try KeychainStore.saveToken(trimmed, for: .cloudflare)
+        isCloudflareConnected = true
+        cloudflareScopeWarning = validation.scopeWarning
+        clearFailure()
+
+        cloudflareAccounts = try await client.listAccounts()
+        if selectedCloudflareAccountId == nil
+            || !cloudflareAccounts.contains(where: { $0.id == selectedCloudflareAccountId })
+        {
+            selectedCloudflareAccountId = cloudflareAccounts.first?.id
+        }
+        updateConnectedCloudflareAccountName()
+        if let accountId = selectedCloudflareAccountId {
+            let listing = try await client.listProjectsWithNotice(accountId: accountId)
+            cloudflareProjects = listing.projects
+            cloudflareProjectNotice = listing.notice
+        }
+        AnalyticsService.shared.capture("token_connected", properties: ["provider": DeploymentProvider.cloudflare.rawValue])
+    }
+
+    func reloadCloudflareProjects() async {
+        guard KeychainStore.hasToken(for: .cloudflare) else {
+            cloudflareProjectNotice = "No Cloudflare token is saved. Add one above."
+            return
+        }
+        guard let client = makeCloudflareClient() else {
+            cloudflareProjectNotice = "Toast couldn't read the saved Cloudflare token from the Keychain. Choose “Replace token…” and paste it again."
+            return
+        }
+        guard let accountId = selectedCloudflareAccountId else {
+            cloudflareProjectNotice = "Select a Cloudflare account first."
+            return
+        }
+        isLoading = true
+        defer { isLoading = false }
+        do {
+            let listing = try await client.listProjectsWithNotice(accountId: accountId)
+            cloudflareProjects = listing.projects
+            cloudflareProjectNotice = listing.notice
+            clearFailure()
+        } catch {
+            cloudflareProjectNotice = error.localizedDescription
+            record(error)
+        }
+    }
+
+    func disconnectCloudflare() {
+        KeychainStore.deleteToken(for: .cloudflare)
+        isCloudflareConnected = false
+        connectedCloudflareAccountName = nil
+        cloudflareAccounts = []
+        cloudflareProjects = []
+        cloudflareScopeWarning = nil
+        selectedCloudflareAccountId = nil
+        removeWatchedProjects(for: .cloudflare)
+    }
+
+    /// Drops one provider's watched projects; resets to onboarding when nothing is left to watch.
+    private func removeWatchedProjects(for provider: DeploymentProvider) {
+        let removed = Set(watchedProjects.filter { $0.provider == provider }.map(\.id))
+        watchedProjects.removeAll { $0.provider == provider }
+        projectStatuses.removeAll { removed.contains($0.id) }
+        for id in removed {
+            previousStatuses[id] = nil
+            lastSuccessfulDeployments[id] = nil
+        }
+        clearFailure()
+
+        if watchedProjects.isEmpty {
+            stopPolling()
+            hasCompletedOnboarding = false
+        }
+        persistAllPreferences()
     }
 
     func connect(token: String) async throws {
@@ -208,7 +454,7 @@ final class DeploymentStore {
         try KeychainStore.saveToken(trimmed)
         isConnected = true
         tokenScopeWarning = validation.scopeWarning
-        lastError = nil
+        clearFailure()
 
         teams = try await client.listTeams()
         if selectedTeamId == nil {
@@ -223,21 +469,14 @@ final class DeploymentStore {
     }
 
     func disconnect() {
-        stopPolling()
         KeychainStore.deleteToken()
         isConnected = false
         connectedTeamName = nil
-        hasCompletedOnboarding = false
         teams = []
         projects = []
-        projectStatuses = []
-        watchedProjects = []
-        previousStatuses = [:]
-        lastSuccessfulDeployments = [:]
         selectedTeamId = nil
-        lastError = nil
         tokenScopeWarning = nil
-        persistAllPreferences()
+        removeWatchedProjects(for: .vercel)
     }
 
     func completeOnboarding(
@@ -247,11 +486,12 @@ final class DeploymentStore {
         guard !selected.isEmpty else { return }
 
         isFinishingOnboarding = true
-        lastError = nil
+        clearFailure()
         defer { isFinishingOnboarding = false }
 
         watchedProjects = selected
         hasCompletedOnboarding = true
+        showSetupComplete = true
         configureBackgroundBehavior(preferences)
         persistAllPreferences()
         AnalyticsService.shared.markAnalyticsRolloutNoticeSeen()
@@ -281,10 +521,15 @@ final class DeploymentStore {
         guard let client = makeAPIClient() else { return }
         do {
             projects = try await client.listProjects(teamId: teamId)
-            lastError = nil
+            clearFailure()
         } catch {
-            lastError = error.localizedDescription
+            record(error)
         }
+    }
+
+    /// Replaces the watched projects for one provider and leaves the others untouched.
+    func updateWatchedProjects(_ selected: [WatchedProject], for provider: DeploymentProvider) {
+        updateWatchedProjects(watchedProjects.filter { $0.provider != provider } + selected)
     }
 
     func updateWatchedProjects(_ selected: [WatchedProject]) {
@@ -315,7 +560,7 @@ final class DeploymentStore {
         do {
             try await connect(token: token)
         } catch {
-            lastError = error.localizedDescription
+            record(error)
             isConnected = false
         }
     }
@@ -333,7 +578,6 @@ final class DeploymentStore {
     }
 
     private func refresh(minIntervalSinceLastSuccess: TimeInterval) async {
-        guard KeychainStore.hasToken(), let client = makeAPIClient() else { return }
         guard !watchedProjects.isEmpty else {
             projectStatuses = []
             return
@@ -346,21 +590,25 @@ final class DeploymentStore {
             return
         }
 
+        let vercelClient = makeAPIClient()
+        let cloudflareClient = makeCloudflareClient()
+        await loadMissingWorkerTags(using: cloudflareClient)
+
         isLoading = true
         defer { isLoading = false }
 
         var results: [ProjectDeploymentStatus] = []
         var fetchError: String?
         var pollError: Error?
+        var failedProviders: Set<DeploymentProvider> = []
 
         for watched in watchedProjects {
             do {
-                let deployments = try await client.listDeployments(
-                    projectId: watched.projectId,
-                    teamId: watched.teamId,
-                    limit: 1
+                let deployment = try await fetchLatestDeployment(
+                    for: watched,
+                    vercel: vercelClient,
+                    cloudflare: cloudflareClient
                 )
-                let deployment = deployments.first
                 if let deployment {
                     lastSuccessfulDeployments[watched.id] = deployment
                 }
@@ -374,8 +622,9 @@ final class DeploymentStore {
             } catch {
                 fetchError = error.localizedDescription
                 pollError = error
-                if case VercelAPIError.unauthorized = error {
-                    isConnected = false
+                failedProviders.insert(watched.provider)
+                if isUnauthorized(error) {
+                    setConnected(false, for: watched.provider)
                 }
                 results.append(ProjectDeploymentStatus(
                     watched: watched,
@@ -389,10 +638,77 @@ final class DeploymentStore {
         projectStatuses = results
         lastRefresh = Date()
         lastError = fetchError
+        lastFailure = pollError.map(UserFacingError.from)
         if let pollError {
             AnalyticsService.shared.capturePollError(pollError)
-        } else if fetchError == nil {
-            isConnected = true
+        }
+        for provider in Set(watchedProjects.map(\.provider)) where !failedProviders.contains(provider) {
+            setConnected(true, for: provider)
+        }
+    }
+
+    private func fetchLatestDeployment(
+        for watched: WatchedProject,
+        vercel: VercelAPIClient?,
+        cloudflare: CloudflareAPIClient?
+    ) async throws -> Deployment? {
+        switch watched.provider {
+        case .vercel:
+            guard let vercel else { throw VercelAPIError.unauthorized }
+            return try await vercel.listDeployments(
+                projectId: watched.projectId,
+                teamId: watched.teamId,
+                limit: 1
+            ).first
+        case .cloudflare:
+            guard let cloudflare else { throw CloudflareAPIError.unauthorized }
+            let workerName = CloudflareProjectKind.name(fromProjectID: watched.projectId)
+            return try await cloudflare.latestDeployment(
+                accountId: watched.teamId,
+                projectID: watched.projectId,
+                workerTag: cloudflareWorkerTags["\(watched.teamId)/\(workerName)"]
+            )
+        }
+    }
+
+    private func loadMissingWorkerTags(using client: CloudflareAPIClient?) async {
+        guard let client else { return }
+        let accounts = Set(watchedProjects.compactMap { watched -> String? in
+            guard watched.provider == .cloudflare,
+                  CloudflareProjectKind(projectID: watched.projectId) == .worker,
+                  cloudflareWorkerTags["\(watched.teamId)/\(CloudflareProjectKind.name(fromProjectID: watched.projectId))"] == nil
+            else { return nil }
+            return watched.teamId
+        })
+        for accountId in accounts {
+            // Best effort: without tags Workers fall back to deployment info.
+            guard let tags = try? await client.workerTags(accountId: accountId) else { continue }
+            for (name, tag) in tags {
+                cloudflareWorkerTags["\(accountId)/\(name)"] = tag
+            }
+        }
+    }
+
+    private func record(_ error: Error) {
+        lastError = error.localizedDescription
+        lastFailure = UserFacingError.from(error)
+    }
+
+    private func clearFailure() {
+        lastError = nil
+        lastFailure = nil
+    }
+
+    private func isUnauthorized(_ error: Error) -> Bool {
+        if case VercelAPIError.unauthorized = error { return true }
+        if case CloudflareAPIError.unauthorized = error { return true }
+        return false
+    }
+
+    private func setConnected(_ connected: Bool, for provider: DeploymentProvider) {
+        switch provider {
+        case .vercel: isConnected = connected
+        case .cloudflare: isCloudflareConnected = connected
         }
     }
 
@@ -410,11 +726,11 @@ final class DeploymentStore {
         let body: String
         switch newStatus {
         case .ready:
-            title = "\(watched.projectName) deployed"
-            body = deployment.commitMessage ?? "Deployment is ready."
+            title = "\(watched.projectName) is live"
+            body = deployment.commitMessage ?? "Your latest deployment finished successfully."
         case .error:
-            title = "\(watched.projectName) failed"
-            body = deployment.commitMessage ?? "Deployment failed."
+            title = "\(watched.projectName) failed to deploy"
+            body = deployment.commitMessage.map { "\($0) Open Toast for details." } ?? "Open Toast to see what went wrong."
         default:
             return
         }
@@ -434,6 +750,7 @@ final class DeploymentStore {
         runInBackgroundEnabled = Self.loadBool(forKey: Keys.runInBackground, default: true)
         relaunchOnCrashEnabled = Self.loadBool(forKey: Keys.relaunchOnCrash, default: true)
         selectedTeamId = defaults.string(forKey: Keys.selectedTeamId)
+        selectedCloudflareAccountId = defaults.string(forKey: Keys.selectedCloudflareAccountId)
         if let data = defaults.data(forKey: Keys.watchedProjects),
            let projects = try? JSONDecoder().decode([WatchedProject].self, from: data)
         {
@@ -445,6 +762,7 @@ final class DeploymentStore {
         persistOnboardingComplete()
         persistWatchedProjects()
         persistSelectedTeamId()
+        persistSelectedCloudflareAccountId()
     }
 
     private func persistOnboardingComplete() {
@@ -455,6 +773,20 @@ final class DeploymentStore {
         if let data = try? JSONEncoder().encode(watchedProjects) {
             UserDefaults.standard.set(data, forKey: Keys.watchedProjects)
         }
+    }
+
+    private func persistSelectedCloudflareAccountId() {
+        if let selectedCloudflareAccountId {
+            UserDefaults.standard.set(selectedCloudflareAccountId, forKey: Keys.selectedCloudflareAccountId)
+        } else {
+            UserDefaults.standard.removeObject(forKey: Keys.selectedCloudflareAccountId)
+        }
+        updateConnectedCloudflareAccountName()
+    }
+
+    private func updateConnectedCloudflareAccountName() {
+        connectedCloudflareAccountName = cloudflareAccounts
+            .first(where: { $0.id == selectedCloudflareAccountId })?.displayName
     }
 
     private func persistSelectedTeamId() {

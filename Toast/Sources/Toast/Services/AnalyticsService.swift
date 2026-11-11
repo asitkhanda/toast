@@ -120,6 +120,9 @@ final class AnalyticsService {
         if let vercelError = error as? VercelAPIError, let statusCode = vercelError.httpStatusCode {
             properties["status_code"] = statusCode
         }
+        if let cloudflareError = error as? CloudflareAPIError, let statusCode = cloudflareError.httpStatusCode {
+            properties["status_code"] = statusCode
+        }
         capture("poll_error", properties: properties)
     }
 
@@ -169,6 +172,19 @@ final class AnalyticsService {
     }
 
     private func analyticsErrorType(for error: Error) -> String {
+        if let cloudflareError = error as? CloudflareAPIError {
+            switch cloudflareError {
+            case .unauthorized: return "unauthorized"
+            case .forbidden: return "forbidden"
+            case .notFound: return "not_found"
+            case .rateLimited: return "rate_limited"
+            case .serverError: return "server_error"
+            case .decodingFailed: return "decoding_failed"
+            case .network: return "network"
+            case .invalidURL: return "invalid_url"
+            case .api: return "api_error"
+            }
+        }
         if let vercelError = error as? VercelAPIError {
             switch vercelError {
             case .unauthorized: return "unauthorized"
@@ -194,6 +210,19 @@ private extension VercelAPIError {
         case .rateLimited: 429
         case .serverError(let code): code
         case .decodingFailed, .network, .invalidURL: nil
+        }
+    }
+}
+
+private extension CloudflareAPIError {
+    var httpStatusCode: Int? {
+        switch self {
+        case .unauthorized: 401
+        case .forbidden: 403
+        case .notFound: 404
+        case .rateLimited: 429
+        case .serverError(let code): code
+        case .decodingFailed, .network, .invalidURL, .api: nil
         }
     }
 }

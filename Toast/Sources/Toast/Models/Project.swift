@@ -21,7 +21,13 @@ struct Project: Codable, Identifiable, Sendable, Hashable {
     let updatedAt: TimeInterval?
     let link: ProjectLink?
 
-    var displayName: String { name }
+    var displayName: String {
+        switch CloudflareProjectKind(projectID: id) {
+        case .pages: "\(name) (Pages)"
+        case .worker: "\(name) (Worker)"
+        case nil: name
+        }
+    }
 }
 
 struct ProjectLink: Codable, Sendable, Hashable {
@@ -37,7 +43,36 @@ struct ProjectsResponse: Codable, Sendable {
 struct WatchedProject: Codable, Identifiable, Sendable, Hashable {
     let projectId: String
     let projectName: String
+    /// Vercel team ID, or Cloudflare account ID.
     let teamId: String
+    let provider: DeploymentProvider
 
-    var id: String { "\(teamId):\(projectId)" }
+    init(
+        projectId: String,
+        projectName: String,
+        teamId: String,
+        provider: DeploymentProvider = .vercel
+    ) {
+        self.projectId = projectId
+        self.projectName = projectName
+        self.teamId = teamId
+        self.provider = provider
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        projectId = try container.decode(String.self, forKey: .projectId)
+        projectName = try container.decode(String.self, forKey: .projectName)
+        teamId = try container.decode(String.self, forKey: .teamId)
+        // Watched projects saved before multi-provider support are all Vercel.
+        provider = try container.decodeIfPresent(DeploymentProvider.self, forKey: .provider) ?? .vercel
+    }
+
+    /// Vercel IDs keep their original format so saved state stays valid.
+    var id: String {
+        switch provider {
+        case .vercel: "\(teamId):\(projectId)"
+        case .cloudflare: "\(provider.rawValue):\(teamId):\(projectId)"
+        }
+    }
 }

@@ -10,15 +10,16 @@ struct CrashReportPrompt: View {
         VStack(alignment: .leading, spacing: 16) {
             Label("Toast quit unexpectedly", systemImage: "exclamationmark.triangle.fill")
                 .font(.headline)
-                .foregroundStyle(.orange)
+                .symbolRenderingMode(.multicolor)
+                .accessibilityAddTraits(.isHeader)
 
-            Text("Send an anonymous diagnostic report to help fix this? No personal information is included.")
+            Text("Would you like to send an anonymous report so the problem can be fixed? It never includes your tokens, project names or personal information.")
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
 
             HStack {
-                Button("Don't Ask Again") {
+                Button("Don't ask again") {
                     RuntimeState.shared.crashPromptSuppressed = true
                     onDismiss()
                 }
@@ -26,7 +27,7 @@ struct CrashReportPrompt: View {
                 Button("Not Now") {
                     onDismiss()
                 }
-                Button("Send Report") {
+                Button("Send report") {
                     AnalyticsService.shared.captureCrashReportAccepted(from: store)
                     onDismiss()
                 }

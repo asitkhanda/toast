@@ -74,6 +74,8 @@ private struct MenuBarContent: View {
                     showAnalyticsRolloutNotice = false
                 }
             )
+        } else if store.hasCompletedOnboarding, store.showSetupComplete {
+            SetupCompleteView()
         } else if store.hasCompletedOnboarding {
             MenuBarPopover()
         } else {

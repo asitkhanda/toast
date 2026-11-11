@@ -6,20 +6,14 @@ struct ProjectToggleRow: View {
     let onToggle: (Bool) -> Void
 
     var body: some View {
-        Button {
-            onToggle(!isSelected)
-        } label: {
-            HStack(spacing: 10) {
-                Image(systemName: isSelected ? "checkmark.square.fill" : "square")
-                    .foregroundStyle(isSelected ? Color.accentColor : Color.secondary)
-                Text(project.displayName)
-                    .foregroundStyle(.primary)
-                Spacer()
-            }
-            .contentShape(Rectangle())
-            .padding(.vertical, 6)
-            .padding(.horizontal, 4)
+        Toggle(isOn: Binding(get: { isSelected }, set: { onToggle($0) })) {
+            Text(project.displayName)
+                .font(.body)
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .buttonStyle(.plain)
+        .toggleStyle(.checkbox)
+        .padding(.vertical, 4)
+        .padding(.horizontal, 4)
+        .contentShape(Rectangle())
     }
 }

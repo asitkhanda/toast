@@ -3,92 +3,37 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Terms &amp; Conditions — Toast</title>
+    <meta name="color-scheme" content="light dark" />
+    <title>Terms and Conditions — Toast</title>
+    <meta name="description" content="Terms and conditions for using Toast, a menu bar and system tray app for Vercel and Cloudflare deployment status." />
     <link rel="icon" href="/favicon.png" type="image/png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <meta
-      name="description"
-      content="Terms and conditions for using Toast, a menu bar / system tray app for Vercel deployment status."
-    />
-    <style>
-      :root {
-        color-scheme: light dark;
-        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        line-height: 1.6;
-      }
-      body {
-        margin: 0;
-        min-height: 100vh;
-        background: #0a0a0a;
-        color: #fafafa;
-      }
-      main {
-        max-width: 42rem;
-        margin: 0 auto;
-        padding: 2.5rem 1.5rem 3rem;
-      }
-      .back {
-        display: inline-block;
-        margin-bottom: 1.5rem;
-        color: #71717a;
-        text-decoration: none;
-        font-size: 0.875rem;
-      }
-      .back:hover {
-        color: #a1a1aa;
-      }
-      h1 {
-        font-size: 1.75rem;
-        margin: 0 0 0.25rem;
-      }
-      .updated {
-        color: #71717a;
-        font-size: 0.875rem;
-        margin: 0 0 2rem;
-      }
-      h2 {
-        font-size: 1.125rem;
-        margin: 2rem 0 0.75rem;
-      }
-      p,
-      li {
-        color: #a1a1aa;
-        margin: 0.75rem 0;
-      }
-      ul {
-        padding-left: 1.25rem;
-      }
-      a {
-        color: #0070f3;
-      }
-      strong {
-        color: #fafafa;
-      }
-      footer {
-        margin-top: 3rem;
-        padding-top: 1.5rem;
-        border-top: 1px solid #27272a;
-        font-size: 0.875rem;
-      }
-      footer nav {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 1rem;
-      }
-      footer a {
-        color: #71717a;
-        text-decoration: none;
-      }
-      footer a:hover {
-        color: #a1a1aa;
-      }
-    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Text:wght@600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/site.css" />
   </head>
   <body>
-    <main>
-      <a class="back" href="/">← Back to Toast</a>
-      <h1>Terms &amp; Conditions</h1>
-      <p class="updated">Last updated: June 28, 2026</p>
+    <a class="skip-link" href="#main">Skip to main content</a>
+    <header class="site-header">
+      <div class="wrap">
+        <a class="brand" href="/">
+          <img src="/toast_logo.png" width="32" height="32" alt="" />
+          <span>Toast</span>
+        </a>
+        <nav class="site-nav" aria-label="Main">
+          <a href="/#install">Install</a>
+          <a href="/#faq">FAQ</a>
+          <a href="/privacy">Privacy</a>
+          <a href="/terms" aria-current="page">Terms</a>
+        </nav>
+      </div>
+    </header>
+    <main id="main">
+      <div class="wrap">
+        <article class="prose">
+<h1>Terms &amp; Conditions</h1>
+      <p class="updated">Last updated: November 11, 2026</p>
 
       <p>
         These Terms &amp; Conditions (“Terms”) govern your use of <strong>Toast</strong>, the
@@ -99,9 +44,9 @@
 
       <h2>About Toast</h2>
       <p>
-        Toast is an independent developer tool that displays Vercel deployment status from your menu
-        bar or system tray. Toast is not affiliated with, endorsed by, or sponsored by Vercel Inc. “Vercel” is a
-        trademark of its respective owner.
+        Toast is an independent developer tool that displays Vercel and Cloudflare Pages deployment status from your menu
+        bar or system tray. Toast is not affiliated with, endorsed by, or sponsored by Vercel Inc. or Cloudflare, Inc. “Vercel” and “Cloudflare” are
+        trademarks of their respective owners.
       </p>
 
       <h2>Source code</h2>
@@ -114,13 +59,13 @@
       <h2>Your responsibilities</h2>
       <ul>
         <li>
-          You are responsible for creating and safeguarding your Vercel personal access token
+          You are responsible for creating and safeguarding your Vercel and Cloudflare tokens
         </li>
         <li>
           You should use a read-only, team-scoped token with the minimum permissions required
         </li>
         <li>
-          You are responsible for complying with Vercel’s terms and any policies that apply to your
+          You are responsible for complying with Vercel’s and Cloudflare’s terms and any policies that apply to your
           account
         </li>
         <li>
@@ -175,7 +120,7 @@
 
       <h2>Third-party services</h2>
       <p>
-        Toast relies on third-party services including Vercel’s API and GitHub Releases for
+        Toast relies on third-party services including Vercel’s and Cloudflare’s APIs and GitHub Releases for
         downloads. Those services are operated by their respective providers and are subject to
         their own terms. We are not responsible for third-party outages, API changes, or policy
         changes.
@@ -208,14 +153,23 @@
         <a href="https://github.com/asitkhanda/toast/issues">GitHub Issues</a> on the Toast
         repository.
       </p>
-
-      <footer>
-        <nav>
-          <a href="/">Home</a>
-          <a href="/privacy">Privacy Policy</a>
+        </article>
+      </div>
+    </main>
+    <footer class="site-footer">
+      <div class="wrap">
+        <div class="footer-left">
+          <a class="footer-brand" href="https://asit.space" rel="noopener noreferrer">
+            <img src="/AKLogo.png" width="700" height="150" alt="Asit Khanda" />
+          </a>
+          <span>© Asit Khanda. 2026.</span>
+        </div>
+        <nav class="footer-right" aria-label="Legal">
+          <a href="/privacy">Privacy policy</a>
+          <a href="/terms">Terms of service</a>
           <a href="https://github.com/asitkhanda/toast">GitHub</a>
         </nav>
-      </footer>
-    </main>
+      </div>
+    </footer>
   </body>
 </html>

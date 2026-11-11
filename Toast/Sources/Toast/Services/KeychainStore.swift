@@ -3,14 +3,11 @@ import Security
 
 enum KeychainStore {
     private static let service = "com.toast.app"
-    private static let account = "vercel-pat"
-    private static let hardenedStorageKey = "keychainTokenHardenedV2"
-
-    static func hasToken() -> Bool {
+    static func hasToken(for provider: DeploymentProvider = .vercel) -> Bool {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
-            kSecAttrAccount as String: account,
+            kSecAttrAccount as String: provider.keychainAccount,
             kSecReturnAttributes as String: true,
             kSecMatchLimit as String: kSecMatchLimitOne,
         ]
@@ -18,12 +15,12 @@ enum KeychainStore {
         return SecItemCopyMatching(query as CFDictionary, nil) == errSecSuccess
     }
 
-    static func saveToken(_ token: String) throws {
+    static func saveToken(_ token: String, for provider: DeploymentProvider = .vercel) throws {
         let data = Data(token.utf8)
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
-            kSecAttrAccount as String: account,
+            kSecAttrAccount as String: provider.keychainAccount,
         ]
 
         SecItemDelete(query as CFDictionary)
@@ -33,21 +30,21 @@ enum KeychainStore {
         addQuery[kSecAttrAccessible as String] = kSecAttrAccessibleWhenUnlockedThisDeviceOnly
         addQuery[kSecAttrSynchronizable as String] = kCFBooleanFalse as Any
         #if !APPSTORE
-        addQuery[kSecAttrAccess as String] = try makeAccess()
+        addQuery[kSecAttrAccess as String] = try makeAccess(for: provider)
         #endif
 
         let status = SecItemAdd(addQuery as CFDictionary, nil)
         guard status == errSecSuccess else {
             throw KeychainError.saveFailed(status)
         }
-        UserDefaults.standard.set(true, forKey: hardenedStorageKey)
+        UserDefaults.standard.set(true, forKey: provider.hardenedStorageKey)
     }
 
-    static func loadToken() -> String? {
+    static func loadToken(for provider: DeploymentProvider = .vercel) -> String? {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
-            kSecAttrAccount as String: account,
+            kSecAttrAccount as String: provider.keychainAccount,
             kSecReturnData as String: true,
             kSecMatchLimit as String: kSecMatchLimitOne,
         ]
@@ -62,27 +59,27 @@ enum KeychainStore {
             return nil
         }
 
-        migrateToHardenedStorageIfNeeded(token)
+        migrateToHardenedStorageIfNeeded(token, for: provider)
         return token
     }
 
-    private static func migrateToHardenedStorageIfNeeded(_ token: String) {
-        guard !UserDefaults.standard.bool(forKey: hardenedStorageKey) else { return }
-        guard (try? saveToken(token)) != nil else { return }
-        UserDefaults.standard.set(true, forKey: hardenedStorageKey)
+    private static func migrateToHardenedStorageIfNeeded(_ token: String, for provider: DeploymentProvider) {
+        guard !UserDefaults.standard.bool(forKey: provider.hardenedStorageKey) else { return }
+        guard (try? saveToken(token, for: provider)) != nil else { return }
+        UserDefaults.standard.set(true, forKey: provider.hardenedStorageKey)
     }
 
-    static func deleteToken() {
+    static func deleteToken(for provider: DeploymentProvider = .vercel) {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
-            kSecAttrAccount as String: account,
+            kSecAttrAccount as String: provider.keychainAccount,
         ]
         SecItemDelete(query as CFDictionary)
-        UserDefaults.standard.removeObject(forKey: hardenedStorageKey)
+        UserDefaults.standard.removeObject(forKey: provider.hardenedStorageKey)
     }
 
-    private static func makeAccess() throws -> SecAccess {
+    private static func makeAccess(for provider: DeploymentProvider) throws -> SecAccess {
         #if APPSTORE
         throw KeychainError.accessFailed(errSecUnimplemented)
         #else
@@ -94,7 +91,7 @@ enum KeychainStore {
 
         var access: SecAccess?
         let accessStatus = SecAccessCreate(
-            "Toast Vercel API token" as CFString,
+            "Toast \(provider.displayName) API token" as CFString,
             [trustedApp] as CFArray,
             &access
         )

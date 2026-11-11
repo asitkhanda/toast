@@ -9,6 +9,8 @@ migration and rollback plan.
 - Login helper bundle ID: `com.toast.app.launcher`
 - Keychain service: `com.toast.app`
 - Keychain account: `vercel-pat`
+- Cloudflare Keychain account: `cloudflare-api-token`
+- Saved `watchedProjects` entries without a `provider` field decode as Vercel
 - Application Support directory: `com.toast.app`
 - Sparkle feed: `https://toast.asit.space/appcast.xml`
 - Sparkle public key: `SUPublicEDKey` in `Toast/Resources/Info.plist`
