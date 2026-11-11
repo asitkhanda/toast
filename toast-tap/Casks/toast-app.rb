@@ -1,8 +1,8 @@
 cask "toast-app" do
   # Reference copy only. The canonical cask is maintained in the external
   # asitkhanda/homebrew-toast-tap repository.
-  version "0.4.3"
-  sha256 "e16180f63a0a792d2eb9ad347dde70935b8a2f5f4591714f07fde94bd7568ff1"
+  version "0.5.0"
+  sha256 "b96d70ecd2d2171bc3d6af9765d69a63ced27e6dde3a6cea1da01ea565bab95f"
 
   url "https://github.com/asitkhanda/toast/releases/download/v#{version}/Toast-#{version}.dmg"
   name "Toast"
