@@ -5,352 +5,156 @@
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="color-scheme" content="light dark" />
         <title>Toast: deployment status in your menu bar</title>
-        <meta
-            name="description"
-            content="Toast is a menu bar and system tray app that shows whether your Vercel and Cloudflare deployments are building, live or failed."
-        />
-        <link rel="icon" href="favicon.png" type="image/png" />
-        <link rel="apple-touch-icon" href="apple-touch-icon.png" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-        <link
-            href="https://fonts.googleapis.com/css2?family=Crimson+Text:wght@600;700&display=swap"
-            rel="stylesheet"
-        />
-        <link
-            rel="stylesheet"
-            href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/regular/style.css"
-        />
+        <meta name="description" content="Toast is a menu bar and system tray app that shows whether your Vercel and Cloudflare deployments are building, live or failed." />
+        <link rel="icon" href="/favicon.png" type="image/png" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <link rel="stylesheet" href="/site.css" />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://toast.asit.space/" />
         <meta property="og:title" content="Toast: deployment status in your menu bar" />
-        <meta
-            property="og:description"
-            content="See whether your Vercel and Cloudflare deployments are building, live or failed without opening a dashboard."
-        />
+        <meta property="og:description" content="See whether your Vercel and Cloudflare deployments are building, live or failed without opening a dashboard." />
         <meta property="og:image" content="https://toast.asit.space/og-image.png" />
-        <meta
-            property="og:image:alt"
-            content="Toast menu bar app showing the status of deployed projects"
-        />
+        <meta property="og:image:alt" content="Toast menu bar app showing the status of deployed projects" />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Toast: deployment status in your menu bar" />
-        <meta
-            name="twitter:description"
-            content="See whether your Vercel and Cloudflare deployments are building, live or failed without opening a dashboard."
-        />
+        <meta name="twitter:description" content="See whether your Vercel and Cloudflare deployments are building, live or failed without opening a dashboard." />
         <meta name="twitter:image" content="https://toast.asit.space/og-image.png" />
     </head>
     <body>
         <a class="skip-link" href="#main">Skip to main content</a>
 
-        <svg width="0" height="0" style="position: absolute" aria-hidden="true" focusable="false">
-            <symbol id="i-live" viewBox="0 0 16 16">
-                <circle cx="8" cy="8" r="7" fill="currentColor" />
-                <path d="M4.6 8.2l2.3 2.3 4.5-4.7" fill="none" stroke="var(--bg)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
-            </symbol>
-            <symbol id="i-building" viewBox="0 0 16 16">
-                <g class="spin">
-                    <path d="M13.5 8a5.5 5.5 0 1 1-1.8-4.07" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-                    <path d="M13.8 2.2v3.3h-3.3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                </g>
-            </symbol>
-            <symbol id="i-failed" viewBox="0 0 16 16">
-                <path d="M5.2 1h5.6L15 5.2v5.6L10.8 15H5.2L1 10.8V5.2z" fill="currentColor" />
-                <path d="M5.6 5.6l4.8 4.8M10.4 5.6l-4.8 4.8" stroke="var(--bg)" stroke-width="1.8" stroke-linecap="round" />
-            </symbol>
-            <symbol id="i-warn" viewBox="0 0 16 16">
-                <path d="M8 1.2l7 12.6H1z" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linejoin="round" />
-                <path d="M8 6v3.4" stroke="var(--bg)" stroke-width="1.8" stroke-linecap="round" />
-                <circle cx="8" cy="11.6" r="1" fill="var(--bg)" />
-            </symbol>
-        </svg>
-
         <header class="site-header">
-            <div class="wrap">
+            <div class="wrap nav">
                 <a class="brand" href="/">
-                    <img src="toast_logo.png" width="32" height="32" alt="" />
+                    <img src="/toast_logo.png" width="28" height="28" alt="" />
                     <span>Toast</span>
                 </a>
                 <nav class="site-nav" aria-label="Main">
-                    <a href="#install">Install</a>
+                    <a href="#setup">How it works</a>
                     <a href="#faq">FAQ</a>
-                    <a href="mailto:asit@hey.com">Contact</a>
-                    <a
-                        class="github-btn"
-                        id="github-btn"
-                        href="https://github.com/asitkhanda/toast"
-                        aria-label="View source on GitHub"
-                        rel="noopener noreferrer"
-                        target="_blank"
-                    >
-                        <i class="ph ph-github-logo" aria-hidden="true"></i>
-                        <span>GitHub</span>
-                        <span class="github-stat" id="download-stat" aria-live="polite"></span>
-                    </a>
-                    <div class="download-split" id="download-split">
-                        <a class="btn btn-primary" href="/download">Download</a>
-                        <button
-                            type="button"
-                            class="download-split-toggle"
-                            id="download-menu-toggle"
-                            aria-label="Choose download platform"
-                            aria-haspopup="true"
-                            aria-expanded="false"
-                            aria-controls="download-menu"
-                        >
-                            <i class="ph ph-caret-down" aria-hidden="true"></i>
-                        </button>
-                        <div class="download-split-menu" id="download-menu" hidden>
-                            <a href="/download?platform=mac">
-                                <i class="ph ph-apple-logo" aria-hidden="true"></i>
-                                Download for macOS
-                            </a>
-                            <a href="/download?platform=windows">
-                                <i class="ph ph-windows-logo" aria-hidden="true"></i>
-                                Download for Windows
-                            </a>
-                        </div>
-                    </div>
+                    <a href="https://github.com/asitkhanda/toast" rel="noopener noreferrer">GitHub</a>
+                    <a class="btn btn-small" href="/download">Download</a>
                 </nav>
             </div>
         </header>
 
         <main id="main">
-            <section class="hero" aria-labelledby="hero-heading">
-                <div class="wrap hero-grid">
-                    <div>
-                        <h1 id="hero-heading">
-                            Know if your deploy worked without opening a dashboard.
-                        </h1>
-                        <p class="lede">
-                            Toast lives in your menu bar and shows whether your latest Vercel and
-                            Cloudflare deployments are building, live or failed. You get a
-                            notification the moment one finishes.
-                        </p>
-                        <div class="cta-row">
-                            <a class="btn btn-primary" href="/download?platform=mac">
-                                <i class="ph ph-apple-logo" aria-hidden="true"></i>
-                                Download for macOS
-                            </a>
-                            <a class="btn btn-secondary" href="/download?platform=windows">
-                                <i class="ph ph-windows-logo" aria-hidden="true"></i>
-                                Download for Windows
-                            </a>
-                        </div>
-                        <p class="platform-note">
-                            Works on macOS 14 or later. Cloudflare support is on macOS first;
-                            Windows supports Vercel today.
-                        </p>
+            <section class="hero hero-band" aria-labelledby="hero-heading">
+                <div class="wrap">
+                    <h1 id="hero-heading">Know if your deploy worked.</h1>
+                    <p class="lede">
+                        Toast lives in your menu bar and shows your Vercel and Cloudflare
+                        deployments at a glance.
+                    </p>
+                    <div class="cta-row">
+                        <a class="btn" href="/download?platform=mac">Download for macOS</a>
+                        <a class="btn btn-secondary" href="/download?platform=windows">Also on Windows ›</a>
+                    </div>
+                    <p class="fine">Requires macOS 14 or later.</p>
+                    <div class="shots shots-pair">
+                        <figure class="shot shot-popover">
+                    <picture>
+                        <source media="(prefers-color-scheme: dark)" srcset="/img/popover-dark.png" />
+                        <img src="/img/popover-light.png" width="800" height="1118" alt="The Toast menu bar popover on the Vercel tab. The header reads 1 building, 7 live, followed by projects with their status, branch and latest commit." fetchpriority="high" />
+                    </picture>
+                </figure>
+                        <figure class="shot shot-popover">
+                    <picture>
+                        <source media="(prefers-color-scheme: dark)" srcset="/img/popover-cloudflare-dark.png" />
+                        <img src="/img/popover-cloudflare-light.png" width="800" height="1096" alt="The Toast popover on the Cloudflare tab, listing a Pages site and two Workers, each marked Ready." fetchpriority="high" />
+                    </picture>
+                </figure>
+                    </div>
+                </div>
+            </section>
 
-                        <div class="brew">
-                            <div class="brew-head">
-                                <span id="brew-title">Or install with Homebrew</span>
-                                <button
-                                    type="button"
-                                    class="brew-copy"
-                                    id="brew-copy-btn"
-                                    aria-describedby="brew-title"
-                                >
-                                    Copy commands
-                                </button>
-                            </div>
-                            <pre><code id="brew-install-commands">brew tap asitkhanda/toast-tap
+            <section class="band band-alt" id="setup" aria-labelledby="setup-heading">
+                <div class="wrap">
+                    <h2 id="setup-heading">Set up in minutes.</h2>
+                    <p class="lede">
+                        Toast shows exactly which permissions to choose. It only ever reads your
+                        deployment status.
+                    </p>
+                    <div class="shots">
+                        <figure class="shot shot-onboarding">
+                    <picture>
+                        <source media="(prefers-color-scheme: dark)" srcset="/img/onboarding-dark.png" />
+                        <img src="/img/onboarding-light.png" width="880" height="1350" alt="Toast setup, step 3 of 5. It lists the exact Cloudflare token permissions to add, each with a copy button." loading="lazy" />
+                    </picture>
+                </figure>
+                    </div>
+                </div>
+            </section>
+
+            <section class="band" aria-labelledby="control-heading">
+                <div class="wrap">
+                    <h2 id="control-heading">Yours to control.</h2>
+                    <p class="lede">
+                        Connect, test or disconnect any time. Your tokens stay in your Mac's
+                        Keychain.
+                    </p>
+                    <div class="shots">
+                        <figure class="shot shot-accounts">
+                    <picture>
+                        <source media="(prefers-color-scheme: dark)" srcset="/img/accounts-dark.png" />
+                        <img src="/img/accounts-light.png" width="1200" height="940" alt="Toast Settings, Accounts tab. Vercel and Cloudflare are both connected, with Test connection, Replace token and Disconnect buttons." loading="lazy" />
+                    </picture>
+                </figure>
+                    </div>
+                </div>
+            </section>
+
+            <section class="band band-alt" id="get" aria-labelledby="get-heading">
+                <div class="wrap">
+                    <h2 id="get-heading">Get Toast.</h2>
+                    <div class="cta-row">
+                        <a class="btn" href="/download?platform=mac">Download for macOS</a>
+                        <a class="btn btn-secondary" href="/download?platform=windows">Download for Windows ›</a>
+                    </div>
+                    <p class="fine">
+                        Cloudflare support is on macOS first. Windows supports Vercel today.
+                    </p>
+                    <div class="brew">
+                        <div class="brew-head">
+                            <span id="brew-title">Or install with Homebrew</span>
+                            <button type="button" class="brew-copy" id="brew-copy-btn" aria-describedby="brew-title">
+                                Copy
+                            </button>
+                        </div>
+                        <pre><code id="brew-install-commands">brew tap asitkhanda/toast-tap
 brew trust asitkhanda/toast-tap
 brew install --cask toast-app</code></pre>
-                        </div>
-                        <p class="sr-only" id="copy-status" role="status" aria-live="polite"></p>
                     </div>
-
-                    <div
-                        class="demo"
-                        role="img"
-                        aria-label="Picture of the Toast popover in the macOS menu bar. Header: all 3 projects are live. Vercel: portfolio is live, docs finishes building and goes live. Cloudflare: api-worker is live."
-                    >
-                        <div class="demo-bar" aria-hidden="true">
-                            <svg width="16" height="16"><use href="#i-live" /></svg>
-                            <span>Tue 10:41</span>
-                        </div>
-                        <div class="demo-popover" aria-hidden="true">
-                            <div class="demo-head">
-                                <div class="demo-title">All 3 projects are live</div>
-                                <p>Checked just now</p>
-                            </div>
-
-                            <div class="demo-group">Vercel</div>
-                            <div class="demo-row">
-                                <div class="demo-row-top">
-                                    <span class="demo-name">portfolio</span>
-                                    <span class="pill pill-live"><svg width="14" height="14"><use href="#i-live" /></svg><span>Live</span></span>
-                                </div>
-                                <p class="demo-meta">Deployed 2 minutes ago · main · Update about page</p>
-                            </div>
-                            <div class="demo-row">
-                                <div class="demo-row-top">
-                                    <span class="demo-name">docs</span>
-                                    <span class="swap">
-                                        <span class="pill pill-building swap-before"><svg width="14" height="14"><use href="#i-building" /></svg><span>Building</span></span>
-                                        <span class="pill pill-live swap-after"><svg width="14" height="14"><use href="#i-live" /></svg><span>Live</span></span>
-                                    </span>
-                                </div>
-                                <p class="demo-meta">Started just now · main · Fix broken link</p>
-                            </div>
-
-                            <div class="demo-group">Cloudflare</div>
-                            <div class="demo-row">
-                                <div class="demo-row-top">
-                                    <span class="demo-name">api-worker</span>
-                                    <span class="pill pill-live"><svg width="14" height="14"><use href="#i-live" /></svg><span>Live</span></span>
-                                </div>
-                                <p class="demo-meta">Deployed 1 hour ago · main · Add rate limiting</p>
-                            </div>
-                        </div>
-                    </div>
+                    <p class="sr-only" id="copy-status" role="status" aria-live="polite"></p>
                 </div>
             </section>
 
-            <section class="section" id="install" aria-labelledby="install-heading">
+            <section class="band" id="faq" aria-labelledby="faq-heading">
                 <div class="wrap">
-                    <h2 id="install-heading">Set up in about two minutes</h2>
-                    <p class="section-intro">
-                        Toast walks you through each step, including exactly which token
-                        permissions to choose.
-                    </p>
-                    <ol class="steps">
-                        <li>
-                            <h3>Install Toast</h3>
-                            <p>
-                                On a Mac, open the downloaded file and drag <strong>Toast</strong>
-                                into <strong>Applications</strong>, then open it. On Windows, run
-                                the Setup file. Toast appears in your menu bar or system tray.
-                            </p>
-                        </li>
-                        <li>
-                            <h3>Connect your service</h3>
-                            <p>
-                                Pick Vercel or Cloudflare and paste a token. Toast only reads
-                                deployment status. It can't change or delete anything.
-                            </p>
-                        </li>
-                        <li>
-                            <h3>Choose your projects</h3>
-                            <p>
-                                Tick the projects to watch, then decide whether to get
-                                notifications and start Toast at login. That's it.
-                            </p>
-                        </li>
-                    </ol>
-                    <div class="callout">
-                        <p>
-                            <strong>Your token stays on your computer.</strong> Toast keeps it in
-                            the macOS Keychain or Windows Credential Manager, and only sends it
-                            to Vercel or Cloudflare to read your status.
-                        </p>
-                    </div>
-                </div>
-            </section>
-
-            <section class="section" aria-labelledby="icon-heading">
-                <div class="wrap">
-                    <h2 id="icon-heading">What the icon is telling you</h2>
-                    <p class="section-intro">
-                        Every status has its own shape and a word, so you never have to rely on
-                        color alone.
-                    </p>
-                    <ul class="legend">
-                        <li>
-                            <span class="pill pill-live"><svg width="14" height="14" aria-hidden="true"><use href="#i-live" /></svg><span>Live</span></span>
-                            <p>The latest deployment finished and is serving visitors.</p>
-                        </li>
-                        <li>
-                            <span class="pill pill-building"><svg width="14" height="14" aria-hidden="true"><use href="#i-building" /></svg><span>Building</span></span>
-                            <p>A deployment is queued or running. Toast checks every 5 seconds.</p>
-                        </li>
-                        <li>
-                            <span class="pill pill-failed"><svg width="14" height="14" aria-hidden="true"><use href="#i-failed" /></svg><span>Failed</span></span>
-                            <p>The build failed or was canceled. Open Toast to see which project.</p>
-                        </li>
-                        <li>
-                            <span class="pill pill-warn"><svg width="14" height="14" aria-hidden="true"><use href="#i-warn" /></svg><span>Not connected</span></span>
-                            <p>Toast can't reach your account. Open Settings to reconnect.</p>
-                        </li>
-                    </ul>
-                </div>
-            </section>
-
-            <section class="section" aria-labelledby="services-heading">
-                <div class="wrap">
-                    <h2 id="services-heading">Works with where you deploy</h2>
-                    <div class="services">
-                        <div>
-                            <h3>Vercel</h3>
-                            <p>
-                                Watch any project on your teams. See the status, branch and
-                                commit of the latest deployment, and jump straight to it.
-                            </p>
-                            <ul>
-                                <li>Create a token scoped to just the team you want to watch.</li>
-                                <li>Available on macOS and Windows.</li>
-                            </ul>
-                        </div>
-                        <div>
-                            <h3>Cloudflare Pages and Workers</h3>
-                            <p>
-                                Pages projects show each build stage. Workers connected to Git
-                                show real build progress, and the rest show their latest
-                                deployment.
-                            </p>
-                            <ul>
-                                <li>
-                                    Create a custom token with <strong>Account Settings</strong>,
-                                    <strong>Cloudflare Pages</strong> and
-                                    <strong>Workers Scripts</strong> set to Read.
-                                </li>
-                                <li>
-                                    Optional: <strong>Workers Builds Configuration</strong> (Read)
-                                    for live build progress.
-                                </li>
-                                <li>Available on macOS. Windows is next.</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <section class="section" id="faq" aria-labelledby="faq-heading">
-                <div class="wrap">
-                    <h2 id="faq-heading">Questions</h2>
+                    <h2 id="faq-heading">Questions.</h2>
                     <div class="faq">
                         <details>
                             <summary>Is it safe to give Toast a token?</summary>
                             <div class="answer">
                                 <p>
-                                    Toast only reads deployment status, and your token never
-                                    leaves your computer except to go to Vercel or Cloudflare. For
-                                    extra safety, give the token the fewest permissions possible:
-                                    one team on Vercel, and only Read permissions on Cloudflare.
-                                    You can revoke it at any time from your account.
+                                    Toast only reads deployment status. Your token stays in your
+                                    Mac's Keychain (or Windows Credential Manager) and is only
+                                    sent to Vercel or Cloudflare. Give it the fewest permissions
+                                    possible: one team on Vercel, and only Read permissions on
+                                    Cloudflare. You can revoke it any time from your account.
                                 </p>
-                                <p>
-                                    Read the <a href="/privacy">privacy policy</a> for details
-                                    about the optional anonymous analytics.
-                                </p>
+                                <p>Read the <a href="/privacy">privacy policy</a> for the details.</p>
                             </div>
                         </details>
                         <details>
                             <summary>Which Cloudflare permissions do I need?</summary>
                             <div class="answer">
-                                <p>Create a custom token and add these, each set to Read:</p>
-                                <ul>
-                                    <li>Account → Account Settings</li>
-                                    <li>Account → Cloudflare Pages (to watch Pages projects)</li>
-                                    <li>Account → Workers Scripts (to watch Workers)</li>
-                                    <li>
-                                        Account → Workers Builds Configuration (optional, for
-                                        live Workers build progress)
-                                    </li>
-                                </ul>
+                                <p>
+                                    Create a custom token with these, each set to Read: Account
+                                    Settings, Cloudflare Pages (for Pages), Workers Scripts (for
+                                    Workers), and optionally Workers Builds Configuration for
+                                    live Workers build progress. Toast lists them during setup.
+                                </p>
                             </div>
                         </details>
                         <details>
@@ -363,13 +167,12 @@ brew install --cask toast-app</code></pre>
                             </div>
                         </details>
                         <details>
-                            <summary>macOS says it can't open Toast. What do I do?</summary>
+                            <summary>macOS says it can't open Toast.</summary>
                             <div class="answer">
                                 <p>
                                     Current downloads are signed and checked by Apple, so this
-                                    shouldn't happen. If it does with an older download,
-                                    right-click Toast, choose <strong>Open</strong>, then
-                                    <strong>Open</strong> again, once.
+                                    shouldn't happen. With an older download, right-click Toast,
+                                    choose Open, then Open again, once.
                                 </p>
                             </div>
                         </details>
@@ -377,13 +180,9 @@ brew install --cask toast-app</code></pre>
                             <summary>How do I uninstall Toast?</summary>
                             <div class="answer">
                                 <p>
-                                    In Toast, open <strong>Settings → Accounts</strong> and
-                                    choose Disconnect to remove your tokens. Then choose
-                                    <strong>More → Quit Toast</strong> and drag Toast from
-                                    Applications to the Trash.
-                                </p>
-                                <p>
-                                    Installed with Homebrew? Run
+                                    In Settings, open Accounts and choose Disconnect to remove
+                                    your tokens. Then choose More, Quit Toast, and drag Toast from
+                                    Applications to the Trash. Installed with Homebrew? Run
                                     <code>brew uninstall --cask toast-app</code>.
                                 </p>
                             </div>
@@ -395,42 +194,17 @@ brew install --cask toast-app</code></pre>
 
         <footer class="site-footer">
             <div class="wrap">
-                <div class="footer-left">
-                    <a class="footer-brand" href="https://asit.space" rel="noopener noreferrer">
-                        <img src="AKLogo.png" width="700" height="150" alt="Asit Khanda" />
-                    </a>
-                    <span>© Asit Khanda. 2026.</span>
-                </div>
-                <nav class="footer-right" aria-label="Legal">
-                    <a href="/privacy">Privacy policy</a>
-                    <a href="/terms">Terms of service</a>
+                <span>© Asit Khanda. 2026.</span>
+                <nav class="footer-links" aria-label="Legal">
+                    <a href="/privacy">Privacy</a>
+                    <a href="/terms">Terms</a>
+                    <a href="mailto:asit@hey.com">Contact</a>
+                    <a href="https://asit.space" rel="noopener noreferrer">asit.space</a>
                 </nav>
             </div>
         </footer>
 
         <script>
-            (function () {
-                var btn = document.getElementById("github-btn");
-                var stat = document.getElementById("download-stat");
-                if (!btn || !stat) return;
-                fetch("/api/stats")
-                    .then(function (r) {
-                        if (!r.ok) throw new Error("stats unavailable");
-                        return r.json();
-                    })
-                    .then(function (data) {
-                        var total = data && data.totalDownloads;
-                        if (typeof total !== "number" || total <= 0) return;
-                        var formatted = new Intl.NumberFormat("en-US").format(total);
-                        stat.textContent = formatted + " downloads";
-                        btn.setAttribute(
-                            "aria-label",
-                            "View source on GitHub. " + formatted + " downloads",
-                        );
-                    })
-                    .catch(function () {});
-            })();
-
             (function () {
                 var btn = document.getElementById("brew-copy-btn");
                 var code = document.getElementById("brew-install-commands");
@@ -443,7 +217,7 @@ brew install --cask toast-app</code></pre>
                     btn.textContent = "Copied";
                     if (status) status.textContent = "Homebrew commands copied to the clipboard.";
                     timer = setTimeout(function () {
-                        btn.textContent = "Copy commands";
+                        btn.textContent = "Copy";
                         if (status) status.textContent = "";
                     }, 2500);
                 }
@@ -471,51 +245,6 @@ brew install --cask toast-app</code></pre>
                     } else {
                         fallback(text);
                     }
-                });
-            })();
-
-            (function () {
-                var root = document.getElementById("download-split");
-                var toggle = document.getElementById("download-menu-toggle");
-                var menu = document.getElementById("download-menu");
-                if (!root || !toggle || !menu) return;
-                var items = menu.querySelectorAll("a");
-
-                function setOpen(open, focusFirst) {
-                    menu.hidden = !open;
-                    toggle.setAttribute("aria-expanded", open ? "true" : "false");
-                    if (open && focusFirst && items[0]) items[0].focus();
-                }
-
-                toggle.addEventListener("click", function (event) {
-                    event.preventDefault();
-                    setOpen(menu.hidden, true);
-                });
-
-                root.addEventListener("keydown", function (event) {
-                    var list = Array.prototype.slice.call(items);
-                    var index = list.indexOf(document.activeElement);
-                    if (event.key === "Escape" && !menu.hidden) {
-                        setOpen(false);
-                        toggle.focus();
-                    } else if (event.key === "ArrowDown" && !menu.hidden) {
-                        event.preventDefault();
-                        list[(index + 1) % list.length].focus();
-                    } else if (event.key === "ArrowUp" && !menu.hidden) {
-                        event.preventDefault();
-                        list[(index - 1 + list.length) % list.length].focus();
-                    } else if (event.key === "ArrowDown" && document.activeElement === toggle) {
-                        event.preventDefault();
-                        setOpen(true, true);
-                    }
-                });
-
-                document.addEventListener("click", function (event) {
-                    if (!root.contains(event.target)) setOpen(false);
-                });
-
-                root.addEventListener("focusout", function (event) {
-                    if (!root.contains(event.relatedTarget)) setOpen(false);
                 });
             })();
         </script>

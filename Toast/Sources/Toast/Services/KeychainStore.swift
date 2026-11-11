@@ -3,7 +3,15 @@ import Security
 
 enum KeychainStore {
     private static let service = "com.toast.app"
+    #if DEBUG
+    /// Lets screenshot tests render connected states without touching the real Keychain.
+    nonisolated(unsafe) static var debugPretendTokenSaved = false
+    #endif
+
     static func hasToken(for provider: DeploymentProvider = .vercel) -> Bool {
+        #if DEBUG
+        if debugPretendTokenSaved { return true }
+        #endif
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,

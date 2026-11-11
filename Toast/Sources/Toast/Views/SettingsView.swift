@@ -94,7 +94,7 @@ private struct GeneralTab: View {
 
 // MARK: - Accounts
 
-private struct AccountsTab: View {
+struct AccountsTab: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
@@ -110,7 +110,7 @@ private struct AccountsTab: View {
     }
 }
 
-private struct AccountCard: View {
+struct AccountCard: View {
     @Environment(DeploymentStore.self) private var store
 
     let provider: DeploymentProvider

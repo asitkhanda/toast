@@ -9,6 +9,10 @@ struct MenuBarPopover: View {
     @State private var showFeedbackSheet = false
     @State private var selectedProvider: DeploymentProvider?
 
+    init(initialProvider: DeploymentProvider? = nil) {
+        _selectedProvider = State(initialValue: initialProvider)
+    }
+
     var body: some View {
         Group {
             if showFeedbackSheet {

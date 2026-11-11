@@ -238,6 +238,80 @@ final class DeploymentStore {
         return watchedProviders.contains { !isConnected(to: $0) }
     }
 
+    #if DEBUG
+    private var isSampleMode = false
+
+    /// Fills the store with made-up projects so the real views can be rendered for the website.
+    func applySampleData(now: Date = Date()) {
+        isSampleMode = true
+        hasCompletedOnboarding = true
+        isConnected = true
+        isCloudflareConnected = true
+        teams = [Team(id: "team", slug: "acme", name: "Acme")]
+        cloudflareAccounts = [Team(id: "acct", slug: nil, name: "Acme Studio")]
+        selectedTeamId = "team"
+        selectedCloudflareAccountId = "acct"
+        connectedTeamName = "Acme"
+        connectedCloudflareAccountName = "Acme Studio"
+        lastRefresh = now
+        lastError = nil
+        lastFailure = nil
+
+        func deployment(_ name: String, state: DeploymentState, minutesAgo: Double, message: String,
+                        sha: String, production: Bool = true) -> Deployment {
+            let seconds = Double(18 + name.utf8.reduce(0) { ($0 &+ Int($1)) % 47 })
+            let created = now.addingTimeInterval(-minutesAgo * 60)
+            let ms = created.timeIntervalSince1970 * 1000
+            return Deployment(
+                uid: "dpl_\(name)", name: name, url: "\(name).example.com", state: state, readyState: nil,
+                target: production ? "production" : "preview", createdAt: ms, buildingAt: ms,
+                ready: state == .ready ? ms + seconds * 1000 : nil,
+                meta: DeploymentMeta(githubCommitMessage: message, githubCommitRef: "main",
+                                     githubCommitSha: sha, githubCommitAuthorName: nil),
+                creator: nil
+            )
+        }
+
+        let vercel: [(String, DeploymentState, Double, String, String)] = [
+            ("marketing-site", .ready, 18, "Update pricing page", "a41f9c2d"),
+            ("web-app", .building, 0.6, "Add dark mode to settings", "7be03d11"),
+            ("docs", .ready, 180, "Fix broken link in quickstart", "c9d2e480"),
+            ("api", .ready, 1500, "Bump rate limits", "2f6a77b3"),
+            ("blog", .ready, 4300, "Publish launch post", "e18b5a09"),
+        ]
+        let cloudflare: [(String, String, DeploymentState, Double, String, String)] = [
+            ("pages:storefront", "storefront", .ready, 42, "Refresh product photos", "5d0c8a71"),
+            ("worker:edge-api", "edge-api", .ready, 95, "Add caching headers", "90be41f6"),
+            ("worker:image-resizer", "image-resizer", .ready, 2900, "Support AVIF output", "13a9d7c4"),
+        ]
+
+        var statuses: [ProjectDeploymentStatus] = []
+        var watched: [WatchedProject] = []
+        for item in vercel {
+            let w = WatchedProject(projectId: "prj_\(item.0)", projectName: item.0, teamId: "team", provider: .vercel)
+            watched.append(w)
+            statuses.append(ProjectDeploymentStatus(
+                watched: w,
+                deployment: deployment(item.0, state: item.1, minutesAgo: item.2, message: item.3, sha: item.4),
+                fetchedAt: now, isStale: false))
+        }
+        for item in cloudflare {
+            let w = WatchedProject(projectId: item.0, projectName: item.1, teamId: "acct", provider: .cloudflare)
+            watched.append(w)
+            statuses.append(ProjectDeploymentStatus(
+                watched: w,
+                deployment: deployment(item.1, state: item.2, minutesAgo: item.3, message: item.4, sha: item.5),
+                fetchedAt: now, isStale: false))
+        }
+        watchedProjects = watched
+        projectStatuses = statuses
+        projects = vercel.map { Project(id: "prj_\($0.0)", name: $0.0, accountId: nil, updatedAt: nil, link: nil) }
+        cloudflareProjects = cloudflare.map {
+            Project(id: $0.0, name: $0.1, accountId: nil, updatedAt: nil, link: nil)
+        }
+    }
+    #endif
+
     private var pollTask: Task<Void, Never>?
     /// Worker name → script tag, keyed "<accountId>/<name>"; needed for Workers Builds.
     private var cloudflareWorkerTags: [String: String] = [:]
@@ -578,6 +652,9 @@ final class DeploymentStore {
     }
 
     private func refresh(minIntervalSinceLastSuccess: TimeInterval) async {
+        #if DEBUG
+        if isSampleMode { return }
+        #endif
         guard !watchedProjects.isEmpty else {
             projectStatuses = []
             return

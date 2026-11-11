@@ -22,8 +22,8 @@ private enum OnboardingStep: Int, CaseIterable {
 struct OnboardingView: View {
     @Environment(DeploymentStore.self) private var store
 
-    @State private var step: OnboardingStep = .welcome
-    @State private var provider: DeploymentProvider = .vercel
+    @State private var step: OnboardingStep
+    @State private var provider: DeploymentProvider
     @State private var token = ""
     @State private var showToken = false
     @State private var isConnecting = false
@@ -36,6 +36,11 @@ struct OnboardingView: View {
     @State private var runInBackground = true
     @State private var relaunchOnCrash = true
     @State private var notifyOnCompletion = true
+
+    init(initialStep: Int = 1, initialProvider: DeploymentProvider = .vercel) {
+        _step = State(initialValue: OnboardingStep(rawValue: initialStep) ?? .welcome)
+        _provider = State(initialValue: initialProvider)
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -53,6 +58,7 @@ struct OnboardingView: View {
         }
         .frame(width: 440)
         .onAppear {
+            guard step == .welcome else { return }
             if let connected = DeploymentProvider.allCases.first(where: {
                 KeychainStore.hasToken(for: $0) && store.isConnected(to: $0)
             }) {

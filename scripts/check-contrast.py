@@ -34,15 +34,12 @@ def ratio(a, b):
 
 
 TEXT = [
-    ("ink", "bg"), ("muted", "bg"), ("link", "bg"), ("ink", "panel"), ("muted", "panel"), ("link", "panel"),
+    ("ink", "bg"), ("muted", "bg"), ("link", "bg"),
+    ("ink", "alt"), ("muted", "alt"), ("link", "alt"),
     ("on-accent", "accent"), ("on-accent", "accent-hover"),
-    ("ok", "bg"), ("building", "bg"), ("fail", "bg"), ("warn", "bg"),
-    ("mock-ink", "mock-bg"), ("mock-muted", "mock-bg"), ("mock-ink", "mock-card"), ("mock-muted", "mock-card"),
-    ("ok", "mock-card"), ("building", "mock-card"), ("fail", "mock-card"),
-    ("mock-bar-ink", "mock-bar"), ("mock-bar-ok", "mock-bar"),
     ("bg", "ink"),
 ]
-UI = [("control-border", "bg"), ("focus", "bg"), ("focus", "panel"), ("control-border", "panel")]
+UI = [("control-border", "bg"), ("focus", "bg"), ("focus", "alt")]
 
 failed = False
 for name, theme in (("light", light), ("dark", dark)):
