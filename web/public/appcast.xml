@@ -38,5 +38,54 @@
         type="application/octet-stream"
         sparkle:edSignature="1U1tQ9Et5WfNVuf/tngckeHRe4wDdv0BUnjjbWYGV+0Yhojn+QndUFbgVAEBdSxjAtiL+NGDlfKk87KoShtfCw=="/>
     </item>
+    <item>
+      <title>Version 0.5.0</title>
+      <description><![CDATA[
+<h2>What's New in Toast 0.5.0</h2>
+<p>Toast now works with <strong>Cloudflare</strong>, and the whole app has been redesigned to be easier to set up, easier to read and easier to use.</p>
+
+<h3>New: Cloudflare Pages and Workers</h3>
+<ul>
+  <li>Watch your Cloudflare <strong>Pages</strong> sites and <strong>Workers</strong> next to your Vercel projects.</li>
+  <li>Pages show each build stage. Workers connected to Git show real build status: queued, building, failed or live.</li>
+  <li>Use a read-only Cloudflare token. Toast walks you through the exact permissions to choose.</li>
+  <li>If you watch both services, switch between them with the new tabs at the top.</li>
+</ul>
+
+<h3>A redesigned Toast</h3>
+<ul>
+  <li><strong>A new look for macOS 26.</strong> Glass buttons, flat rows and a cleaner layout that feels at home on your Mac.</li>
+  <li><strong>A clear summary.</strong> The top of the menu now says things like "All 8 projects are live" or "1 failed, 2 live".</li>
+  <li><strong>Guided setup.</strong> A five-step welcome explains what Toast does, shows how to create your token, and lets you search and select projects.</li>
+  <li><strong>Settings in tabs.</strong> General, Accounts, Projects, Notifications, Privacy and About. Test your connection with one click.</li>
+  <li><strong>Plain-language errors.</strong> Every problem now says what happened and what to do next, with a button to fix it.</li>
+  <li><strong>Friendlier notifications.</strong> "my-site is live" or "my-site failed to deploy".</li>
+</ul>
+
+<h3>Easier for everyone to use</h3>
+<ul>
+  <li>Every status has an icon and a word, not just a color.</li>
+  <li>Larger text and stronger contrast. Increase Contrast and Reduce Motion are respected.</li>
+  <li>VoiceOver reads a full summary for the menu bar icon and for each project.</li>
+  <li>Keyboard shortcuts: <strong>⌘R</strong> refresh, <strong>⌘,</strong> settings, <strong>⌘Q</strong> quit.</li>
+</ul>
+
+<h3>Good to know</h3>
+<ul>
+  <li>Your existing Vercel setup carries over. You don't need to do anything.</li>
+  <li>Cloudflare support is on macOS for now. The Windows app is unchanged and still supports Vercel.</li>
+  <li>The website has also been redesigned, with dark mode and clearer install steps.</li>
+</ul>
+<p><a href="https://toast.asit.space">toast.asit.space</a></p>
+      ]]></description>
+      <sparkle:version>14</sparkle:version>
+      <sparkle:shortVersionString>0.5.0</sparkle:shortVersionString>
+      <pubDate>Wed, 11 Nov 2026 06:26:13 +0000</pubDate>
+      <enclosure
+        url="https://github.com/asitkhanda/toast/releases/download/v0.5.0/Toast-0.5.0.zip"
+        length="5415783"
+        type="application/octet-stream"
+        sparkle:edSignature="otWHrinTTt8pkMIO92Jv9kc7O+v5iYP9pFuC3GW8ZsuOyGAsI1vk4D8wEuVyY2Yi76zpX2Y1urjDf4UC0wdSCA=="/>
+    </item>
 </channel>
 </rss>
